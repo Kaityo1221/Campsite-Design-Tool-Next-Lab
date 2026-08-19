@@ -1,0 +1,45 @@
+# CREATIVE MODE 開発ナレッジ
+
+最終更新: 2026-08-20
+対象: `creative/index.html`
+作業ブランチ: `agent/creative-dev-patches`
+
+## 安全運用ルール
+
+1. 1回の改修は1機能ずつ。複数機能の共通化を先にしない。
+2. main はユーザーが明示的に「マージして」と言うまで触らない。
+3. 入口初期化コード `entryFile.onchange` / `start.onclick` / 左右利き切替 / `beginEditor()` は不用意に触らない。
+4. 変更後は必ず JavaScript 構文チェックを通す。
+5. iPhone Safari では毎回、ファイル選択 → 左右利き → CREATIVE MODE開始の入口スモークテストを先に行う。
+6. 入口確認後、そのコミットで変更した機能だけを確認する。
+7. 失敗時は推測修正を重ねず、直前の成功地点へ戻す。
+8. テストURLは commit SHA 直指定を優先する。
+9. 本番リポジトリ `Campsite-Design-Tool-JP` は明示指示なしで更新しない。
+
+## 既知の起動不能インシデント
+
+過去に POI / ポリゴン / 共通アクションバー / ツール切替を一度に横断改修した結果、Safariで入口が無反応になった。原因の単一行は未特定。以降は最小差分で積む。
+
+## 確認済み主要地点
+
+- `92ecf1f7e19635a1ade17c40625e5ff4c1296a8a`: 起動確認済みベースライン
+- `d3fa132ac06ebf586b4ad1c5c97a3689cd4effb4`: POI中央十字配置確認済み
+- `bb98ce0afc7320c920a6b9f7748381d3a77a2a5a`: ポリゴン×追加
+- `269698cbd8c89ba6b4818f333122aabd7ecc1655`: POI位置調整を中央十字方式へ
+- `681aa087c65635ee621e5721ab42997feb6b8ab2`: 保存先選択を含む完成版
+- `f315ba5b27faf0c7545d43cca99adec18f5f2332`: 完成版を Next-Lab main へ反映
+
+## 2026-08-19〜20 開発パッチ
+
+現在 `agent/creative-dev-patches` に main から先行して積んでいる。
+
+- 地図License表示を最下部に小さく配置し、通常地図 / 航空写真の切替に合わせて OSM / Esri attribution を切替。
+- ポリゴン作成中の「戻る」で `polyDraft` の直前点を1つ戻す。
+- 物差しは自動始点配置を廃止。PCクリック / スマホタップで始点、次のクリック / タップで終点を設定。
+- 新規 PokéStop を青 `#2F80ED`、新規 Gym を濃い黄色 `#C69200`、新規 PowerSpot を紫 `#9D6BD1` に変更。
+- 既存ゲームスポット画像を `creative/assets/pokestop.png` / `gym.png` / `powerspot.png` に配置。
+- 既存 PokéStop / Gym / PowerSpot は上記画像を固定アイコンとして使用。新規3レイヤーは色付き丸マーカーのまま。
+
+## 未着手
+
+- なし。現在の開発パッチは端末実機確認待ち。
