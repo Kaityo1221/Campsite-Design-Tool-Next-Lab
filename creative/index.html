@@ -29,7 +29,7 @@
 <script>
 (()=>{'use strict';
 const STORE='next-lab-creative-v7',HAND='next-lab-creative-hand';
-const layerDefs=[['existing-pokestop','既存 PokéStop','#3f89c9'],['existing-gym','既存 Gym','#d85454'],['existing-power','既存 PowerSpot','#8656b8'],['new-pokestop','新規 PokéStop','#e6a400'],['new-gym','新規 Gym','#d06b2f'],['new-power','新規 PowerSpot','#9d6bd1']];
+const layerDefs=[['existing-pokestop','既存 PokéStop','#3f89c9'],['existing-gym','既存 Gym','#d85454'],['existing-power','既存 PowerSpot','#8656b8'],['new-pokestop','新規 PokéStop','#2F80ED'],['new-gym','新規 Gym','#C69200'],['new-power','新規 PowerSpot','#9D6BD1']];
 const $=id=>document.getElementById(id),entry=$('entry'),entryFile=$('entryFile'),start=$('startButton'),resume=$('resumeButton'),status=$('status'),toolMenu=$('toolMenu'),layerPanel=$('layerPanel'),circlePanel=$('circlePanel');
 const map=L.map('map',{zoomControl:false}).setView([35.6812,139.7671],16);map.createPane('distance');map.getPane('distance').classList.add('distance-pane');map.createPane('polygon');map.getPane('polygon').classList.add('polygon-pane');map.createPane('placement');map.getPane('placement').classList.add('placement-pane');map.createPane('ruler');map.getPane('ruler').classList.add('ruler-pane');map.attributionControl.setPosition('bottomleft');map.attributionControl.setPrefix(false);
 const base=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:20,attribution:'&copy; OpenStreetMap contributors'}).addTo(map),aerial=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:20,attribution:'Tiles &copy; Esri'});
