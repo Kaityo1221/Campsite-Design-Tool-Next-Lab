@@ -1,0 +1,48 @@
+name: creative-existing-icons-patch
+
+on:
+  push:
+    branches:
+      - agent/creative-dev-patches
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/creative-dev-patches
+
+      - name: Use repository images for existing game spots
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('creative/index.html')
+          s=p.read_text()
+          old='.poi-dot{width:16px;height:16px;border-radius:50%;border:3px solid white;box-shadow:0 1px 5px rgba(0,0,0,.4)}'
+          new='.poi-dot{width:16px;height:16px;border-radius:50%;border:3px solid white;box-shadow:0 1px 5px rgba(0,0,0,.4)}.poi-image-icon{display:block;width:36px;height:36px;object-fit:contain;filter:drop-shadow(0 2px 3px rgba(0,0,0,.35));pointer-events:none}'
+          if s.count(old)!=1: raise SystemExit(f'poi css match count={s.count(old)}')
+          s=s.replace(old,new,1)
+          old='function drawRecord(r){if(r.deleted)return;const icon=L.divIcon({className:\'\',html:`<div class="poi-dot" style="background:${color(r.layer)}"></div>`,iconSize:[16,16],iconAnchor:[8,8]});r.marker=L.marker(r.latlng,{icon}).addTo(groups[r.layer]);r.marker.on(\'click\',()=>recordPopup(r))}'
+          new='function recordIcon(r){const src={\'existing-pokestop\':\'assets/pokestop.png\',\'existing-gym\':\'assets/gym.png\',\'existing-power\':\'assets/powerspot.png\'}[r.layer];if(src)return L.divIcon({className:\'\',html:`<img class="poi-image-icon" src="${src}" alt="">`,iconSize:[36,36],iconAnchor:[18,18]});return L.divIcon({className:\'\',html:`<div class="poi-dot" style="background:${color(r.layer)}"></div>`,iconSize:[16,16],iconAnchor:[8,8]})}\nfunction drawRecord(r){if(r.deleted)return;const icon=recordIcon(r);r.marker=L.marker(r.latlng,{icon}).addTo(groups[r.layer]);r.marker.on(\'click\',()=>recordPopup(r))}'
+          if s.count(old)!=1: raise SystemExit(f'drawRecord match count={s.count(old)}')
+          p.write_text(s.replace(old,new,1))
+          PY
+          python - <<'PY'
+          import re
+          from pathlib import Path
+          s=Path('creative/index.html').read_text()
+          m=re.search(r'<script>\s*(\(\(\)=>\{.*?\}\)\(\);)\s*</script>',s,re.S)
+          if not m: raise SystemExit('inline app script not found')
+          Path('/tmp/creative-app.js').write_text(m.group(1))
+          PY
+          node --check /tmp/creative-app.js
+          git config user.name "creative-lab-bot"
+          git config user.email "creative-lab-bot@users.noreply.github.com"
+          git add creative/index.html
+          git commit -m "Use fixed image icons for existing game spots"
+          git push origin HEAD:agent/creative-dev-patches
