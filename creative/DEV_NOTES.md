@@ -1,6 +1,6 @@
 # CREATIVE MODE 開発ナレッジ
 
-最終更新: 2026-08-19
+最終更新: 2026-08-20
 対象: `creative/index.html`
 作業ブランチ: `agent/creative-dev-patches`
 
@@ -29,15 +29,17 @@
 - `681aa087c65635ee621e5721ab42997feb6b8ab2`: 保存先選択を含む完成版
 - `f315ba5b27faf0c7545d43cca99adec18f5f2332`: 完成版を Next-Lab main へ反映
 
-## 2026-08-19 開発パッチ
+## 2026-08-19〜20 開発パッチ
 
 現在 `agent/creative-dev-patches` に main から先行して積んでいる。
 
 - 地図License表示を最下部に小さく配置し、通常地図 / 航空写真の切替に合わせて OSM / Esri attribution を切替。
 - ポリゴン作成中の「戻る」で `polyDraft` の直前点を1つ戻す。
 - 物差しは自動始点配置を廃止。PCクリック / スマホタップで始点、次のクリック / タップで終点を設定。
+- 新規 PokéStop を青 `#2F80ED`、新規 Gym を濃い黄色 `#C69200`、新規 PowerSpot を紫 `#9D6BD1` に変更。
+- 既存ゲームスポット画像を `creative/assets/pokestop.png` / `gym.png` / `powerspot.png` に配置。
+- 既存 PokéStop / Gym / PowerSpot は上記画像を固定アイコンとして使用。新規3レイヤーは色付き丸マーカーのまま。
 
 ## 未着手
 
-- 既存ゲームスポットの固定画像アイコン化。Next-Lab内に対象画像ファイルがまだ無いため、画像ファイル名 / 配置先確定後に実装。
-- 追加ゲームスポットの色変更。色指定待ち。
+- なし。現在の開発パッチは端末実機確認待ち。
