@@ -1,0 +1,98 @@
+name: creative-dev-fixes
+
+on:
+  push:
+    branches:
+      - agent/creative-dev-patches
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/creative-dev-patches
+
+      - name: Patch responsive map license
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('creative/index.html')
+          s=p.read_text()
+          old="#map{position:fixed;inset:0;z-index:1}.leaflet-control-zoom{display:none!important}.leaflet-control-attribution{font-size:8px!important}"
+          new="#map{position:fixed;inset:0;z-index:1}.leaflet-control-zoom{display:none!important}.leaflet-control-attribution{font-size:7px!important;line-height:1.1!important;padding:1px 3px!important;margin:0 0 calc(64px + env(safe-area-inset-bottom)) 2px!important;background:rgba(255,255,255,.68)!important;color:#555!important;max-width:calc(100vw - 20px)!important;white-space:normal!important}.leaflet-control-attribution a{font-size:inherit!important;color:inherit!important}@media(max-width:520px){.leaflet-control-attribution{font-size:6px!important;max-width:76vw!important}}"
+          if s.count(old)!=1: raise SystemExit(f'attribution css match count={s.count(old)}')
+          s=s.replace(old,new,1)
+          old="map.attributionControl.setPosition('bottomleft');"
+          new="map.attributionControl.setPosition('bottomleft');map.attributionControl.setPrefix(false);"
+          if s.count(old)!=1: raise SystemExit(f'attribution control match count={s.count(old)}')
+          s=s.replace(old,new,1)
+          old="const base=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:20,attribution:'&copy; OpenStreetMap contributors'}).addTo(map),aerial=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:20});"
+          new="const base=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:20,attribution:'&copy; OpenStreetMap contributors'}).addTo(map),aerial=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:20,attribution:'Tiles &copy; Esri'});"
+          if s.count(old)!=1: raise SystemExit(f'basemap match count={s.count(old)}')
+          p.write_text(s.replace(old,new,1))
+          PY
+          python - <<'PY'
+          import re
+          from pathlib import Path
+          s=Path('creative/index.html').read_text()
+          m=re.search(r'<script>\s*(\(\(\)=>\{.*?\}\)\(\);)\s*</script>',s,re.S)
+          if not m: raise SystemExit('inline app script not found')
+          Path('/tmp/creative-app.js').write_text(m.group(1))
+          PY
+          node --check /tmp/creative-app.js
+          git config user.name "creative-lab-bot"
+          git config user.email "creative-lab-bot@users.noreply.github.com"
+          git add creative/index.html
+          git commit -m "Keep map license responsive to active basemap"
+
+      - name: Patch polygon draft undo
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('creative/index.html')
+          s=p.read_text()
+          old="function undo(){const a=undoStack.pop();if(!a)return;"
+          new="function undo(){if(activeTool==='polygon'){if(polyDraft.length){polyDraft.pop();updatePolyPreview();msg(polyDraft.length?`ポリゴン：${polyDraft.length}点まで戻りました`:'始点の前まで戻りました',1000)}else msg('これ以上戻れません',1000);return}const a=undoStack.pop();if(!a)return;"
+          if s.count(old)!=1: raise SystemExit(f'undo match count={s.count(old)}')
+          p.write_text(s.replace(old,new,1))
+          PY
+          python - <<'PY'
+          import re
+          from pathlib import Path
+          s=Path('creative/index.html').read_text();m=re.search(r'<script>\s*(\(\(\)=>\{.*?\}\)\(\);)\s*</script>',s,re.S)
+          if not m: raise SystemExit('inline app script not found')
+          Path('/tmp/creative-app.js').write_text(m.group(1))
+          PY
+          node --check /tmp/creative-app.js
+          git add creative/index.html
+          git commit -m "Undo the previous point while drawing polygons"
+
+      - name: Patch ruler click and tap interaction
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('creative/index.html')
+          s=p.read_text()
+          old="function clearRuler(){if(!ruler)return;if(ruler.line)map.removeLayer(ruler.line);if(ruler.start)map.removeLayer(ruler.start);if(ruler.end)map.removeLayer(ruler.end);ruler=null;status.classList.add('fade')}\nfunction beginRuler(){clearRuler();const c=map.getCenter(),start=L.circleMarker(c,{radius:6,color:'#263e73',fillColor:'#fff',fillOpacity:1,pane:'ruler'}).addTo(map),end=L.marker(c,{draggable:true,icon:L.divIcon({className:'preview-touch',html:'<div class=\"preview-dot\" style=\"box-shadow:0 0 0 3px rgba(255,255,255,.5),0 0 14px 5px rgba(80,160,255,.85)\"></div>',iconSize:[36,36],iconAnchor:[18,18]}),pane:'ruler'}).addTo(map),line=L.polyline([c,c],{color:'#344e84',weight:4,pane:'ruler'}).addTo(map);ruler={start,end,line};end.on('drag',e=>{const ll=e.target.getLatLng();line.setLatLngs([c,ll]);msg(`距離 ${map.distance(c,ll).toFixed(1)}m`,0)})}"
+          new="function clearRuler(){if(!ruler)return;if(ruler.onClick)map.off('click',ruler.onClick);if(ruler.line)map.removeLayer(ruler.line);if(ruler.start)map.removeLayer(ruler.start);if(ruler.end)map.removeLayer(ruler.end);ruler=null;status.classList.add('fade')}\nfunction beginRuler(){clearRuler();const onClick=e=>{if(!ruler)return;const ll=e.latlng;if(!ruler.start){ruler.start=L.circleMarker(ll,{radius:6,color:'#263e73',fillColor:'#fff',fillOpacity:1,pane:'ruler'}).addTo(map);msg('始点を設定しました。終点をクリック / タップしてください',0);return}if(!ruler.end)ruler.end=L.circleMarker(ll,{radius:6,color:'#263e73',fillColor:'#fff',fillOpacity:1,pane:'ruler'}).addTo(map);else ruler.end.setLatLng(ll);const startLl=ruler.start.getLatLng();if(!ruler.line)ruler.line=L.polyline([startLl,ll],{color:'#344e84',weight:4,pane:'ruler'}).addTo(map);else ruler.line.setLatLngs([startLl,ll]);msg(`距離 ${map.distance(startLl,ll).toFixed(1)}m`,0)};ruler={start:null,end:null,line:null,onClick};map.on('click',onClick);msg('始点をクリック / タップしてください',0)}"
+          if s.count(old)!=1: raise SystemExit(f'ruler block match count={s.count(old)}')
+          p.write_text(s.replace(old,new,1))
+          PY
+          python - <<'PY'
+          import re
+          from pathlib import Path
+          s=Path('creative/index.html').read_text();m=re.search(r'<script>\s*(\(\(\)=>\{.*?\}\)\(\);)\s*</script>',s,re.S)
+          if not m: raise SystemExit('inline app script not found')
+          Path('/tmp/creative-app.js').write_text(m.group(1))
+          PY
+          node --check /tmp/creative-app.js
+          git add creative/index.html
+          git commit -m "Make ruler respond to desktop clicks and mobile taps"
+
+      - name: Push isolated commits
+        run: git push origin HEAD:agent/creative-dev-patches
