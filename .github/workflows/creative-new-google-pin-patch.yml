@@ -1,0 +1,50 @@
+name: creative-new-google-pin-patch
+
+on:
+  push:
+    branches:
+      - agent/creative-dev-patches
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/creative-dev-patches
+
+      - name: Use Google pin icons for new spots
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('creative/index.html')
+          s=p.read_text()
+          replacements={
+            "https://maps.google.com/mapfiles/kml/pushpin/blue-pushpin.png":"https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
+            "https://maps.google.com/mapfiles/kml/pushpin/ylw-pushpin.png":"https://maps.google.com/mapfiles/ms/icons/yellow-dot.png",
+            "https://maps.google.com/mapfiles/kml/pushpin/purple-pushpin.png":"https://maps.google.com/mapfiles/ms/icons/purple-dot.png",
+          }
+          for old,new in replacements.items():
+              if s.count(old)!=1:
+                  raise SystemExit(f'{old} match count={s.count(old)}')
+              s=s.replace(old,new,1)
+          p.write_text(s)
+          PY
+          python - <<'PY'
+          import re
+          from pathlib import Path
+          s=Path('creative/index.html').read_text()
+          m=re.search(r'<script>\s*(\(\(\)=>\{.*?\}\)\(\);)\s*</script>',s,re.S)
+          if not m: raise SystemExit('inline app script not found')
+          Path('/tmp/creative-app.js').write_text(m.group(1))
+          PY
+          node --check /tmp/creative-app.js
+          git config user.name "creative-lab-bot"
+          git config user.email "creative-lab-bot@users.noreply.github.com"
+          git add creative/index.html
+          git commit -m "Use Google pin icons for new spots"
+          git push origin HEAD:agent/creative-dev-patches
