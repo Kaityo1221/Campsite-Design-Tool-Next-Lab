@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover,user-scalable=no">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>CREATIVE MODE | Double Tap Review</title>
+</head>
+<body>
+<script>
+(async()=>{
+  const review='https://raw.githubusercontent.com/Kaityo1221/Campsite-Design-Tool-Next-Lab/agent/creative-dev-batch/creative/review-release-notes.html';
+  const res=await fetch(review,{cache:'no-store'});
+  if(!res.ok){document.body.textContent='レビュー画面の読み込みに失敗しました。';return;}
+  let src=await res.text();
+  const anchor="html=html.replace('ファイルを選択してください。','編集するKMZを選択してください。');";
+  const extra=`\n  /* Safe double-tap zoom: keep POI / line / polygon / UI interactions untouched. */\n  html=html.replace(\"const map=L.map('map',{zoomControl:false}).setView\",\"const map=L.map('map',{zoomControl:false,doubleClickZoom:false}).setView\");\n  html=html.replace(\"const circleRenderer=L.canvas({padding:.5,pane:'distance'});\",\`\n  const unsafeDoubleTapTarget=t=>!!(t&&t.closest&&t.closest('.leaflet-marker-icon,.leaflet-interactive,button,input,textarea,select,a,.panel,.toolmenu,.bottom-bar,.save,.toolbox'));\n  map.on('dblclick',e=>{\n    const target=e.originalEvent?.target;\n    if(unsafeDoubleTapTarget(target))return;\n    const z=Math.min(map.getZoom()+1,map.getMaxZoom());\n    map.setView(e.latlng,z,{animate:true});\n  });\n  const circleRenderer=L.canvas({padding:.5,pane:'distance'});\`);`;
+  if(!src.includes(anchor)){document.body.textContent='レビュー画面の更新位置が見つかりません。';return;}
+  src=src.replace(anchor,anchor+extra);
+  document.open();document.write(src);document.close();
+})().catch(()=>{document.body.textContent='レビュー画面の読み込みに失敗しました。';});
+</script>
+</body>
+</html>
