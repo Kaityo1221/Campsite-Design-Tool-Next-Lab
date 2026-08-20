@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover,user-scalable=no">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>CREATIVE MODE | Save Name Review</title>
+<style>
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#17130f;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+#app{position:fixed;inset:0;width:100%;height:100%;border:0;background:#e8e0cf}
+.review-badge{position:fixed;left:50%;top:calc(8px + env(safe-area-inset-top));transform:translateX(-50%);z-index:99998;padding:5px 10px;border-radius:999px;background:rgba(40,33,24,.9);color:#f7dfaa;font-size:10px;font-weight:900;pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.modal{position:fixed;inset:0;z-index:99999;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(10,8,6,.52);backdrop-filter:blur(3px)}
+.modal.open{display:flex}.card{width:min(100%,420px);padding:18px;border:1px solid #b89a57;border-radius:20px;background:#fffdf7;color:#382d1d;box-shadow:0 18px 50px rgba(0,0,0,.35)}
+.card h2{margin:0 0 6px;font-size:20px}.card p{margin:0 0 14px;color:#71634e;font-size:12px;line-height:1.55}.name-row{display:grid;grid-template-columns:1fr auto;align-items:center;border:2px solid #d7c394;border-radius:14px;background:#fff;padding:0 12px}.name-row:focus-within{border-color:#c58c1f;box-shadow:0 0 0 3px rgba(197,140,31,.14)}
+#filename{width:100%;height:52px;border:0;outline:0;background:transparent;color:#382d1d;font-size:16px;font-weight:800;min-width:0}.ext{font-weight:900;color:#8a6b31}.actions{display:grid;grid-template-columns:1fr 1.35fr;gap:9px;margin-top:14px}.actions button{min-height:48px;border-radius:13px;font:inherit;font-weight:900}.cancel{border:1px solid #c8bda8;background:#fff;color:#5d5141}.confirm{border:1px solid #8a6b31;background:linear-gradient(180deg,#f3d77f,#c58c1f);color:#37270c}.hint{margin-top:9px!important;font-size:10px!important;color:#8c7c65!important}
+</style>
+</head>
+<body>
+<iframe id="app" title="CREATIVE MODE review" src="https://htmlpreview.github.io/?https://github.com/Kaityo1221/Campsite-Design-Tool-Next-Lab/blob/main/creative/index.html"></iframe>
+<div class="review-badge">NEXT LAB · SAVE NAME REVIEW</div>
+<div id="modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="card">
+    <h2 id="modalTitle">ファイル名を決める</h2>
+    <p>複数パターンを分けて保存できます。拡張子は自動で <strong>.kmz</strong> になります。</p>
+    <div class="name-row"><input id="filename" autocomplete="off" maxlength="100"><span class="ext">.kmz</span></div>
+    <div class="actions"><button id="cancel" class="cancel">キャンセル</button><button id="confirm" class="confirm">この名前で保存</button></div>
+    <p class="hint">未入力の場合は元のファイル名を使います。</p>
+  </div>
+</div>
+<script>
+(()=>{'use strict';
+const frame=document.getElementById('app'),modal=document.getElementById('modal'),input=document.getElementById('filename'),cancel=document.getElementById('cancel'),confirm=document.getElementById('confirm');
+let desiredName='',fallbackName='campsite_creative',bypass=false,installed=false;
+const clean=s=>String(s||'').replace(/[\\/:*?"<>|]/g,'_').replace(/\.kmz$/i,'').trim();
+function openModal(){input.value=fallbackName;modal.classList.add('open');setTimeout(()=>{input.focus();input.select()},30)}
+function closeModal(){modal.classList.remove('open')}
+function install(){
+  if(installed)return;
+  let w,d;try{w=frame.contentWindow;d=frame.contentDocument||w.document;if(!d||!d.body)return}catch{return}
+  const save=d.getElementById('save');if(!save)return;
+  installed=true;
+  const originalClick=save.onclick;
+  save.onclick=null;
+  save.addEventListener('click',e=>{
+    if(bypass){bypass=false;if(typeof originalClick==='function')originalClick.call(save,e);return}
+    e.preventDefault();e.stopImmediatePropagation();
+    const src=(d.getElementById('entryFileName')?.textContent||'').trim();
+    const base=src&&src!=='未選択'?src.replace(/\.(kmz|kml|zip)$/i,'')+'_creative':'campsite_creative';
+    fallbackName=clean(base)||'campsite_creative';openModal();
+  },true);
+  const nativeAnchorClick=w.HTMLAnchorElement.prototype.click;
+  w.HTMLAnchorElement.prototype.click=function(){if(this.download&&desiredName)this.download=desiredName+'.kmz';return nativeAnchorClick.call(this)};
+  if(typeof w.showSaveFilePicker==='function'){
+    const nativePicker=w.showSaveFilePicker.bind(w);
+    w.showSaveFilePicker=opts=>nativePicker({...opts,suggestedName:desiredName?desiredName+'.kmz':opts?.suggestedName});
+  }
+  if(w.navigator&&typeof w.navigator.share==='function'&&typeof w.File!=='undefined'){
+    const nativeShare=w.navigator.share.bind(w.navigator);
+    try{w.navigator.share=async data=>{if(desiredName&&data?.files?.length){data={...data,files:data.files.map(f=>new w.File([f],desiredName+'.kmz',{type:f.type,lastModified:f.lastModified}))}}return nativeShare(data)}}catch{}
+  }
+}
+frame.addEventListener('load',()=>{installed=false;setTimeout(install,500);setTimeout(install,1600)});
+setInterval(install,1200);
+cancel.onclick=()=>{closeModal();desiredName=''};
+confirm.onclick=()=>{desiredName=clean(input.value)||fallbackName;closeModal();let d;try{d=frame.contentDocument||frame.contentWindow.document}catch{return}const save=d.getElementById('save');if(!save)return;bypass=true;save.click()};
+input.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();confirm.click()}else if(e.key==='Escape'){cancel.click()}});
+modal.addEventListener('click',e=>{if(e.target===modal)cancel.click()});
+})();
+</script>
+</body>
+</html>
