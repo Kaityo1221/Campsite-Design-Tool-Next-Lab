@@ -14,11 +14,12 @@
   if(!res.ok){document.body.textContent='レビュー画面の読み込みに失敗しました。';return;}
   let html=await res.text();
   const patch=`<style>
-  .lab-update{position:relative;overflow:hidden;border:1px solid rgba(255,239,200,.48);border-radius:18px;background:rgba(38,33,25,.86);text-align:left;box-shadow:0 4px 14px rgba(0,0,0,.18)}
-  .lab-update-head{width:100%;min-height:48px;padding:9px 13px;border:0;background:transparent;color:#fff8e8;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:9px;text-align:left}
-  .lab-update-badge{padding:4px 7px;border-radius:999px;background:linear-gradient(180deg,#f3d77f,#c58c1f);color:#37270c;font-size:9px;font-weight:950;letter-spacing:.08em}
-  .lab-update-title{font-size:12px;font-weight:950}.lab-update-ver{font-size:10px;font-weight:850;color:#f7dfaa}.lab-update-body{display:none;padding:0 13px 12px;color:#fff8e8}.lab-update.open .lab-update-body{display:block}.lab-update-body ul{margin:2px 0 8px;padding-left:19px}.lab-update-body li{margin:5px 0;font-size:11px;line-height:1.5;font-weight:800}.lab-update-note{font-size:9px;color:rgba(255,248,232,.7)}
-  .lab-update-close{width:100%;min-height:34px;margin-top:5px;border:1px solid rgba(255,239,200,.35);border-radius:10px;background:rgba(255,248,232,.1);color:#fff8e8;font-size:10px;font-weight:900}
+  .lab-update-pill{position:absolute;right:12px;bottom:12px;z-index:20;min-height:34px;padding:0 11px;border:1px solid rgba(255,239,200,.48);border-radius:999px;background:rgba(38,33,25,.88);color:#fff8e8;display:flex;align-items:center;gap:7px;font-size:9px;font-weight:950;letter-spacing:.04em;box-shadow:0 4px 12px rgba(0,0,0,.24)}
+  .lab-update-pill .new{padding:3px 6px;border-radius:999px;background:linear-gradient(180deg,#f3d77f,#c58c1f);color:#37270c;font-size:8px}.lab-update-pill .ver{color:#f7dfaa}
+  .lab-release-modal{position:absolute;inset:0;z-index:40;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(10,8,6,.52);backdrop-filter:blur(4px)}
+  .lab-release-modal.open{display:flex}.lab-release-card{width:min(100%,430px);padding:18px;border:1px solid rgba(255,239,200,.55);border-radius:22px;background:rgba(38,33,25,.90);color:#fff8e8;box-shadow:0 18px 50px rgba(0,0,0,.38);text-align:left}
+  .lab-release-head{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:9px}.lab-release-badge{padding:4px 7px;border-radius:999px;background:linear-gradient(180deg,#f3d77f,#c58c1f);color:#37270c;font-size:9px;font-weight:950;letter-spacing:.08em}.lab-release-title{font-size:13px;font-weight:950}.lab-release-ver{font-size:10px;font-weight:850;color:#f7dfaa}
+  .lab-release-card ul{margin:15px 0 8px;padding-left:20px}.lab-release-card li{margin:6px 0;font-size:12px;line-height:1.55;font-weight:800}.lab-release-note{font-size:10px;color:rgba(255,248,232,.72)}.lab-release-close{width:100%;min-height:42px;margin-top:14px;border:1px solid rgba(255,239,200,.42);border-radius:12px;background:rgba(255,248,232,.10);color:#fff8e8;font-size:11px;font-weight:900}
   .save-name-modal{position:fixed;inset:0;z-index:99999;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(10,8,6,.52);backdrop-filter:blur(3px)}
   .save-name-modal.open{display:flex}.save-name-card{width:min(100%,420px);padding:18px;border:1px solid #b89a57;border-radius:20px;background:#fffdf7;color:#382d1d;box-shadow:0 18px 50px rgba(0,0,0,.35)}
   .save-name-card h2{margin:0 0 6px;font-size:20px}.save-name-card p{margin:0 0 14px;color:#71634e;font-size:12px;line-height:1.55}.save-name-row{display:grid;grid-template-columns:1fr auto;align-items:center;border:2px solid #d7c394;border-radius:14px;background:#fff;padding:0 12px}.save-name-row:focus-within{border-color:#c58c1f;box-shadow:0 0 0 3px rgba(197,140,31,.14)}
@@ -27,16 +28,17 @@
   <div id="saveNameModal" class="save-name-modal" role="dialog" aria-modal="true" aria-labelledby="saveNameTitle"><div class="save-name-card"><h2 id="saveNameTitle">ファイル名を決める</h2><p>複数パターンを分けて保存できます。拡張子は自動で <strong>.kmz</strong> になります。</p><div class="save-name-row"><input id="saveNameInput" autocomplete="off" maxlength="100"><span class="save-name-ext">.kmz</span></div><div class="save-name-actions"><button id="saveNameCancel" class="save-name-cancel">キャンセル</button><button id="saveNameOk" class="save-name-ok">この名前で保存</button></div><p class="save-name-hint">未入力の場合は元のファイル名を使います。</p></div></div>
   <script>
   (()=>{'use strict';
-    const RELEASE_KEY='next-lab-release-seen-20260820-a';
-    const panel=document.querySelector('.entry-panel');
-    if(panel){
-      const box=document.createElement('div');box.className='lab-update';
-      box.innerHTML='<button type="button" class="lab-update-head"><span class="lab-update-badge">NEW</span><span class="lab-update-title">LAB UPDATE</span><span class="lab-update-ver">vNext</span></button><div class="lab-update-body"><ul><li>保存時にファイル名を変更できるようになりました。</li></ul><div class="lab-update-note">今回の主な更新内容です。</div><button type="button" class="lab-update-close">閉じる</button></div>';
-      panel.insertBefore(box,panel.firstChild);
-      const seen=localStorage.getItem(RELEASE_KEY)==='1';if(!seen)box.classList.add('open');
-      const head=box.querySelector('.lab-update-head'),close=box.querySelector('.lab-update-close');
-      head.onclick=()=>box.classList.toggle('open');
-      close.onclick=()=>{box.classList.remove('open');localStorage.setItem(RELEASE_KEY,'1')};
+    const RELEASE_KEY='next-lab-release-seen-20260820-b';
+    const entry=document.getElementById('entry');
+    if(entry){
+      const pill=document.createElement('button');pill.type='button';pill.className='lab-update-pill';pill.innerHTML='<span class="new">NEW</span><span>LAB UPDATE</span><span class="ver">vNext</span>';
+      const modal=document.createElement('div');modal.className='lab-release-modal';modal.innerHTML='<div class="lab-release-card"><div class="lab-release-head"><span class="lab-release-badge">NEW</span><span class="lab-release-title">LAB UPDATE</span><span class="lab-release-ver">vNext</span></div><ul><li>保存時にファイル名を変更できるようになりました。</li></ul><div class="lab-release-note">今回の主な更新内容です。</div><button type="button" class="lab-release-close">閉じる</button></div>';
+      entry.append(pill,modal);
+      const close=modal.querySelector('.lab-release-close');
+      const openRelease=()=>modal.classList.add('open');
+      const closeRelease=()=>{modal.classList.remove('open');localStorage.setItem(RELEASE_KEY,'1')};
+      pill.onclick=openRelease;close.onclick=closeRelease;modal.addEventListener('click',e=>{if(e.target===modal)closeRelease()});
+      if(localStorage.getItem(RELEASE_KEY)!=='1')openRelease();
     }
     const save=document.getElementById('save'),modal=document.getElementById('saveNameModal'),input=document.getElementById('saveNameInput'),cancel=document.getElementById('saveNameCancel'),ok=document.getElementById('saveNameOk');
     if(!save||!modal||!input||!cancel||!ok)return;
