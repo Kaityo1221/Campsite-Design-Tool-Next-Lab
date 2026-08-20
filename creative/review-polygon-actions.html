@@ -19,28 +19,36 @@
   if(!html.includes(selectAnchor)||!html.includes(bindOld)){document.body.textContent='ポリゴン操作の更新位置が見つかりません。';return;}
 
   const helpers=`
-let polygonToolMenu=null;
+let polygonToolMenu=null,polygonDeleteOverlays=[],polygonDeleteCancel=null;
 function closePolygonToolMenu(){if(polygonToolMenu){polygonToolMenu.remove();polygonToolMenu=null}}
-function beginAnotherPolygon(){closePolygonToolMenu();activeTool='polygon';clearDraft();clearRuler();beginCrosshairPolygon();renderTools();msg('追加するポリゴンを描いてください',2200)}
-function deletePolygonByIndex(index){
-  const list=polygons.filter(p=>!p.deleted),target=list[index];if(!target)return;
-  if(!confirm('このポリゴンを削除しますか？'))return;
-  target.deleted=true;closePolygonToolMenu();drawAll();renderLayerPanel();snapshot();msg('ポリゴンを削除しました');
+function stopPolygonDeleteMode(){
+  polygonDeleteOverlays.forEach(x=>map.removeLayer(x));polygonDeleteOverlays=[];
+  if(polygonDeleteCancel){polygonDeleteCancel.remove();polygonDeleteCancel=null}
+  status.classList.add('fade');
 }
-function openPolygonDeleteList(){
-  closePolygonToolMenu();
+function beginAnotherPolygon(){
+  closePolygonToolMenu();stopPolygonDeleteMode();
+  activeTool='polygon';clearDraft();clearRuler();beginCrosshairPolygon();renderTools();msg('追加するポリゴンを描いてください',2200)
+}
+function beginPolygonDeleteMode(){
+  closePolygonToolMenu();stopPolygonDeleteMode();closeMenus();
   const list=polygons.filter(p=>!p.deleted);if(!list.length){msg('削除できるポリゴンはありません');return}
-  if(list.length===1){deletePolygonByIndex(0);return}
-  const wrap=document.createElement('div'),title=document.createElement('div'),buttons=document.createElement('div'),close=document.createElement('button');
-  Object.assign(wrap.style,{position:'fixed',left:'50%',transform:'translateX(-50%)',bottom:'calc(132px + env(safe-area-inset-bottom))',zIndex:'1600',width:'min(330px,88vw)',padding:'10px',borderRadius:'16px',background:'rgba(48,40,29,.97)',boxShadow:'0 8px 24px rgba(0,0,0,.28)',color:'#fff8e8'});
-  title.textContent='削除するポリゴンを選択';Object.assign(title.style,{fontWeight:'950',fontSize:'13px',margin:'0 0 8px'});
-  Object.assign(buttons.style,{display:'grid',gap:'7px'});
-  list.forEach((_,i)=>{const b=document.createElement('button');b.type='button';b.textContent='ポリゴン '+(i+1)+' を削除';Object.assign(b.style,{height:'44px',border:'2px solid #c88179',borderRadius:'12px',background:'#fff0ee',color:'#8c2f28',fontWeight:'950'});b.onclick=()=>deletePolygonByIndex(i);buttons.appendChild(b)});
-  close.type='button';close.textContent='キャンセル';Object.assign(close.style,{width:'100%',height:'42px',marginTop:'8px',border:'2px solid #8a6b31',borderRadius:'12px',background:'#fffdf7',color:'#37270c',fontWeight:'950'});close.onclick=closePolygonToolMenu;
-  wrap.append(title,buttons,close);document.body.appendChild(wrap);polygonToolMenu=wrap;
+  msg('削除するポリゴンを地図上でタップしてください',0);
+  list.forEach(p=>{
+    const overlay=L.polygon(p.points,{pane:'polygon',color:'#d84f43',weight:5,fillColor:'#e86c61',fillOpacity:.14,interactive:true}).addTo(map);
+    overlay.on('click',e=>{
+      L.DomEvent.stopPropagation(e);
+      if(!confirm('このポリゴンを削除しますか？'))return;
+      p.deleted=true;stopPolygonDeleteMode();drawAll();renderLayerPanel();snapshot();msg('ポリゴンを削除しました');
+    });
+    polygonDeleteOverlays.push(overlay);
+  });
+  const cancel=document.createElement('button');cancel.type='button';cancel.textContent='削除をキャンセル';
+  Object.assign(cancel.style,{position:'fixed',left:'50%',transform:'translateX(-50%)',bottom:'calc(132px + env(safe-area-inset-bottom))',zIndex:'1650',minWidth:'180px',height:'48px',padding:'0 18px',border:'2px solid #8a6b31',borderRadius:'14px',background:'#fffdf7',color:'#37270c',fontWeight:'950',fontSize:'14px',boxShadow:'0 6px 18px rgba(0,0,0,.28)'});
+  cancel.onclick=()=>{stopPolygonDeleteMode();msg('削除をキャンセルしました')};document.body.appendChild(cancel);polygonDeleteCancel=cancel;
 }
 function openPolygonChoice(){
-  closeMenus();closePolygonToolMenu();
+  stopPolygonDeleteMode();closeMenus();closePolygonToolMenu();
   const count=polygons.filter(p=>!p.deleted).length;
   if(!count){beginAnotherPolygon();return}
   const wrap=document.createElement('div'),title=document.createElement('div'),add=document.createElement('button'),del=document.createElement('button'),close=document.createElement('button');
@@ -50,7 +58,7 @@ function openPolygonChoice(){
   add.type='button';add.textContent='＋ ポリゴンを追加';Object.assign(add.style,common,{border:'2px solid #8a6b31',background:'#fff8e6',color:'#37270c'});
   del.type='button';del.textContent='削除する';Object.assign(del.style,common,{marginTop:'7px',border:'2px solid #c88179',background:'#fff0ee',color:'#8c2f28'});
   close.type='button';close.textContent='キャンセル';Object.assign(close.style,common,{marginTop:'7px',height:'42px',border:'2px solid #8a6b31',background:'#fffdf7',color:'#37270c'});
-  add.onclick=beginAnotherPolygon;del.onclick=openPolygonDeleteList;close.onclick=closePolygonToolMenu;
+  add.onclick=beginAnotherPolygon;del.onclick=beginPolygonDeleteMode;close.onclick=closePolygonToolMenu;
   wrap.append(title,add,del,close);document.body.appendChild(wrap);polygonToolMenu=wrap;
 }
 `;
