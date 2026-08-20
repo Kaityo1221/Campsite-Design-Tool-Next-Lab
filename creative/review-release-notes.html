@@ -13,6 +13,9 @@
   const res=await fetch(raw,{cache:'no-store'});
   if(!res.ok){document.body.textContent='レビュー画面の読み込みに失敗しました。';return;}
   let html=await res.text();
+  /* UI only: keep the existing file-input/startup logic untouched. */
+  html=html.replace('KMZ / KMLを選択','KMZを選択');
+  html=html.replace('ファイルを選択してください。','編集するKMZを選択してください。');
   const patch=`<style>
   .lab-update-pill{position:absolute;right:12px;bottom:12px;z-index:20;min-height:34px;padding:0 11px;border:1px solid rgba(255,239,200,.48);border-radius:999px;background:rgba(38,33,25,.88);color:#fff8e8;display:flex;align-items:center;gap:7px;font-size:9px;font-weight:950;letter-spacing:.04em;box-shadow:0 4px 12px rgba(0,0,0,.24)}
   .lab-update-pill .new{padding:3px 6px;border-radius:999px;background:linear-gradient(180deg,#f3d77f,#c58c1f);color:#37270c;font-size:8px}.lab-update-pill .ver{color:#f7dfaa}
