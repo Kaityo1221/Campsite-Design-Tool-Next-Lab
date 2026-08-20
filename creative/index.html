@@ -18,21 +18,8 @@
   if(!src.includes(old)){document.body.textContent='CSV互換パッチの適用位置が見つかりません。';return;}
   src=src.replace(old,replacement);
 
-  const polygonChoice=/function openPolygonChoice\(\)\{[\s\S]*?\}function selectTool\(tool\)\{/;
-  const singlePolygonChoice=`function openPolygonChoice(){
-    closeMenus();closePolygonToolMenu();clearPolygonDeleteMode();
-    const existing=polygons.filter(p=>!p.deleted);
-    if(!existing.length){beginAnotherPolygon();return}
-    const w=document.createElement('div'),redo=document.createElement('button'),close=document.createElement('button');
-    Object.assign(w.style,{position:'fixed',left:'50%',transform:'translateX(-50%)',bottom:'calc(132px + env(safe-area-inset-bottom))',zIndex:'1600',width:'min(330px,88vw)',padding:'10px',borderRadius:'16px',background:'rgba(48,40,29,.97)',display:'grid',gridTemplateColumns:'1fr auto',gap:'8px',alignItems:'center'});
-    redo.textContent='↻ やり直し';
-    close.textContent='×';
-    Object.assign(redo.style,{height:'50px',border:'2px solid #8a6b31',borderRadius:'13px',background:'#fff8e6',color:'#37270c',fontWeight:'950',fontSize:'16px'});
-    Object.assign(close.style,{width:'48px',height:'48px',border:'2px solid #8a6b31',borderRadius:'13px',background:'#fffdf7',color:'#5d4630',fontWeight:'950',fontSize:'24px'});
-    redo.onclick=()=>{if(!confirm('現在のポリゴンを削除して、最初から描き直しますか？'))return;existing.forEach(p=>p.deleted=true);closePolygonToolMenu();drawAll();renderLayerPanel();snapshot();beginAnotherPolygon()};
-    close.onclick=closePolygonToolMenu;
-    w.append(redo,close);document.body.appendChild(w);polygonToolMenu=w
-  }function selectTool(tool){`;
+  const polygonChoice=/function openPolygonChoice\(\)\{[\s\S]*?polygonToolMenu=w\}/;
+  const singlePolygonChoice="function openPolygonChoice(){closeMenus();closePolygonToolMenu();clearPolygonDeleteMode();const existing=polygons.filter(p=>!p.deleted);if(!existing.length){beginAnotherPolygon();return}const w=document.createElement('div'),redo=document.createElement('button'),close=document.createElement('button');Object.assign(w.style,{position:'fixed',left:'50%',transform:'translateX(-50%)',bottom:'calc(132px + env(safe-area-inset-bottom))',zIndex:'1600',width:'min(330px,88vw)',padding:'10px',borderRadius:'16px',background:'rgba(48,40,29,.97)',display:'grid',gridTemplateColumns:'1fr auto',gap:'8px',alignItems:'center'});redo.textContent='↻ やり直し';close.textContent='×';Object.assign(redo.style,{height:'50px',border:'2px solid #8a6b31',borderRadius:'13px',background:'#fff8e6',color:'#37270c',fontWeight:'950',fontSize:'16px'});Object.assign(close.style,{width:'48px',height:'48px',border:'2px solid #8a6b31',borderRadius:'13px',background:'#fffdf7',color:'#5d4630',fontWeight:'950',fontSize:'24px'});redo.onclick=()=>{if(!confirm('現在のポリゴンを削除して、最初から描き直しますか？'))return;existing.forEach(p=>p.deleted=true);closePolygonToolMenu();drawAll();renderLayerPanel();snapshot();beginAnotherPolygon()};close.onclick=closePolygonToolMenu;w.append(redo,close);document.body.appendChild(w);polygonToolMenu=w}";
   if(!polygonChoice.test(src)){document.body.textContent='ポリゴン操作の更新位置が見つかりません。';return;}
   src=src.replace(polygonChoice,singlePolygonChoice);
 
