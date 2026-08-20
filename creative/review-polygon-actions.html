@@ -38,7 +38,7 @@ function showPolygonDeleteConfirm(item){
   polygonDeleteLayers.forEach(x=>x.layer.setStyle({color:x===item?'#d6453d':'#bf6b66',weight:x===item?6:4,fillColor:'#d6453d',fillOpacity:x===item?.18:.08}));
   const wrap=document.createElement('div'),del=document.createElement('button'),back=document.createElement('button');
   Object.assign(wrap.style,{position:'fixed',left:'50%',transform:'translateX(-50%)',bottom:'calc(132px + env(safe-area-inset-bottom))',zIndex:'1700',width:'min(360px,90vw)',padding:'9px',borderRadius:'16px',background:'rgba(48,40,29,.97)',boxShadow:'0 8px 24px rgba(0,0,0,.3)',display:'grid',gridTemplateColumns:'1fr auto',gap:'8px'});
-  del.type='button';del.textContent='このポリゴン削除します';Object.assign(del.style,{height:'50px',border:'2px solid #c88179',borderRadius:'13px',background:'#fff0ee',color:'#8c2f28',fontWeight:'950',fontSize:'14px'});
+  del.type='button';del.textContent='ポリゴンを削除';Object.assign(del.style,{height:'50px',border:'2px solid #c88179',borderRadius:'13px',background:'#fff0ee',color:'#8c2f28',fontWeight:'950',fontSize:'14px'});
   back.type='button';back.textContent='戻る';Object.assign(back.style,{minWidth:'78px',height:'50px',border:'2px solid #8a6b31',borderRadius:'13px',background:'#fffdf7',color:'#37270c',fontWeight:'950',fontSize:'14px'});
   wrap.append(del,back);document.body.appendChild(wrap);polygonDeleteAction=wrap;
   del.onclick=()=>{item.p.deleted=true;clearPolygonDeleteMode();drawAll();renderLayerPanel();snapshot();msg('ポリゴンを削除しました')};
