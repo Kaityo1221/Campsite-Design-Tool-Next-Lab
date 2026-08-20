@@ -1,0 +1,1 @@
+Safety merge check: main hotfixes are staged into the vNext base before any main merge. Preserve localStorage key next-lab-creative-v7. Recheck POI explicit layer classification and distance-circle export rules (50m required, 40m/30m optional) before release.
