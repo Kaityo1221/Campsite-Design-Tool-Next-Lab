@@ -1,0 +1,1 @@
+The compatibility-safe entry is used to preserve main hotfix classification while keeping vNext features layered above it.
