@@ -23,26 +23,52 @@
   .lab-release-modal.open{display:flex}.lab-release-card{width:min(100%,430px);padding:18px;border:1px solid rgba(255,239,200,.55);border-radius:22px;background:rgba(38,33,25,.90);color:#fff8e8;box-shadow:0 18px 50px rgba(0,0,0,.38);text-align:left}
   .lab-release-head{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:9px}.lab-release-badge{padding:4px 7px;border-radius:999px;background:linear-gradient(180deg,#f3d77f,#c58c1f);color:#37270c;font-size:9px;font-weight:950;letter-spacing:.08em}.lab-release-title{font-size:13px;font-weight:950}.lab-release-ver{font-size:10px;font-weight:850;color:#f7dfaa}
   .lab-release-card ul{margin:15px 0 8px;padding-left:20px}.lab-release-card li{margin:6px 0;font-size:12px;line-height:1.55;font-weight:800}.lab-release-note{font-size:10px;color:rgba(255,248,232,.72)}.lab-release-close{width:100%;min-height:42px;margin-top:14px;border:1px solid rgba(255,239,200,.42);border-radius:12px;background:rgba(255,248,232,.10);color:#fff8e8;font-size:11px;font-weight:900}
-  .save-name-modal{position:fixed;inset:0;z-index:99999;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(10,8,6,.52);backdrop-filter:blur(3px)}
-  .save-name-modal.open{display:flex}.save-name-card{width:min(100%,420px);padding:18px;border:1px solid #b89a57;border-radius:20px;background:#fffdf7;color:#382d1d;box-shadow:0 18px 50px rgba(0,0,0,.35)}
-  .save-name-card h2{margin:0 0 6px;font-size:20px}.save-name-card p{margin:0 0 14px;color:#71634e;font-size:12px;line-height:1.55}.save-name-row{display:grid;grid-template-columns:1fr auto;align-items:center;border:2px solid #d7c394;border-radius:14px;background:#fff;padding:0 12px}.save-name-row:focus-within{border-color:#c58c1f;box-shadow:0 0 0 3px rgba(197,140,31,.14)}
-  #saveNameInput{width:100%;height:52px;border:0;outline:0;background:transparent;color:#382d1d;font-size:16px;font-weight:800;min-width:0}.save-name-ext{font-weight:900;color:#8a6b31}.save-name-actions{display:grid;grid-template-columns:1fr 1.35fr;gap:9px;margin-top:14px}.save-name-actions button{min-height:48px;border-radius:13px;font:inherit;font-weight:900}.save-name-cancel{border:1px solid #c8bda8;background:#fff;color:#5d5141}.save-name-ok{border:1px solid #8a6b31;background:linear-gradient(180deg,#f3d77f,#c58c1f);color:#37270c}.save-name-hint{margin-top:9px!important;font-size:10px!important;color:#8c7c65!important}
+  .save-name-modal,.file-help-modal{position:fixed;inset:0;z-index:99999;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(10,8,6,.52);backdrop-filter:blur(3px)}
+  .save-name-modal.open,.file-help-modal.open{display:flex}.save-name-card,.file-help-card{width:min(100%,420px);padding:18px;border:1px solid #b89a57;border-radius:20px;background:#fffdf7;color:#382d1d;box-shadow:0 18px 50px rgba(0,0,0,.35)}
+  .save-name-card h2,.file-help-card h2{margin:0 0 6px;font-size:20px}.save-name-card p,.file-help-card p{margin:0 0 14px;color:#71634e;font-size:12px;line-height:1.6}.save-name-row{display:grid;grid-template-columns:1fr auto;align-items:center;border:2px solid #d7c394;border-radius:14px;background:#fff;padding:0 12px}.save-name-row:focus-within{border-color:#c58c1f;box-shadow:0 0 0 3px rgba(197,140,31,.14)}
+  #saveNameInput{width:100%;height:52px;border:0;outline:0;background:transparent;color:#382d1d;font-size:16px;font-weight:800;min-width:0}.save-name-ext{font-weight:900;color:#8a6b31}.save-name-actions{display:grid;grid-template-columns:1fr 1.35fr;gap:9px;margin-top:14px}.save-name-actions button,.file-help-close{min-height:48px;border-radius:13px;font:inherit;font-weight:900}.save-name-cancel{border:1px solid #c8bda8;background:#fff;color:#5d5141}.save-name-ok,.file-help-close{border:1px solid #8a6b31;background:linear-gradient(180deg,#f3d77f,#c58c1f);color:#37270c}.save-name-hint{margin-top:9px!important;font-size:10px!important;color:#8c7c65!important}.file-help-icon{font-size:30px;margin-bottom:8px}.file-help-close{width:100%}.file-help-card strong{color:#5f4314}
   </style>
   <div id="saveNameModal" class="save-name-modal" role="dialog" aria-modal="true" aria-labelledby="saveNameTitle"><div class="save-name-card"><h2 id="saveNameTitle">ファイル名を決める</h2><p>複数パターンを分けて保存できます。拡張子は自動で <strong>.kmz</strong> になります。</p><div class="save-name-row"><input id="saveNameInput" autocomplete="off" maxlength="100"><span class="save-name-ext">.kmz</span></div><div class="save-name-actions"><button id="saveNameCancel" class="save-name-cancel">キャンセル</button><button id="saveNameOk" class="save-name-ok">この名前で保存</button></div><p class="save-name-hint">未入力の場合は元のファイル名を使います。</p></div></div>
+  <div id="fileHelpModal" class="file-help-modal" role="dialog" aria-modal="true" aria-labelledby="fileHelpTitle"><div class="file-help-card"><div class="file-help-icon">📄→🗺️</div><h2 id="fileHelpTitle">このファイルは読み込めません</h2><p id="fileHelpText">Creative ModeではKMZファイルを選択してください。</p><button id="fileHelpClose" type="button" class="file-help-close">OK</button></div></div>
   <script>
   (()=>{'use strict';
     const RELEASE_KEY='next-lab-release-seen-20260820-b';
     const entry=document.getElementById('entry');
     if(entry){
       const pill=document.createElement('button');pill.type='button';pill.className='lab-update-pill';pill.innerHTML='<span class="new">NEW</span><span>LAB UPDATE</span><span class="ver">vNext</span>';
-      const modal=document.createElement('div');modal.className='lab-release-modal';modal.innerHTML='<div class="lab-release-card"><div class="lab-release-head"><span class="lab-release-badge">NEW</span><span class="lab-release-title">LAB UPDATE</span><span class="lab-release-ver">vNext</span></div><ul><li>保存時にファイル名を変更できるようになりました。</li></ul><div class="lab-release-note">今回の主な更新内容です。</div><button type="button" class="lab-release-close">閉じる</button></div>';
-      entry.append(pill,modal);
-      const close=modal.querySelector('.lab-release-close');
-      const openRelease=()=>modal.classList.add('open');
-      const closeRelease=()=>{modal.classList.remove('open');localStorage.setItem(RELEASE_KEY,'1')};
-      pill.onclick=openRelease;close.onclick=closeRelease;modal.addEventListener('click',e=>{if(e.target===modal)closeRelease()});
+      const releaseModal=document.createElement('div');releaseModal.className='lab-release-modal';releaseModal.innerHTML='<div class="lab-release-card"><div class="lab-release-head"><span class="lab-release-badge">NEW</span><span class="lab-release-title">LAB UPDATE</span><span class="lab-release-ver">vNext</span></div><ul><li>保存時にファイル名を変更できるようになりました。</li><li>KMZ以外を選んだ時の案内を分かりやすくしました。</li></ul><div class="lab-release-note">今回の主な更新内容です。</div><button type="button" class="lab-release-close">閉じる</button></div>';
+      entry.append(pill,releaseModal);
+      const close=releaseModal.querySelector('.lab-release-close');
+      const openRelease=()=>releaseModal.classList.add('open');
+      const closeRelease=()=>{releaseModal.classList.remove('open');localStorage.setItem(RELEASE_KEY,'1')};
+      pill.onclick=openRelease;close.onclick=closeRelease;releaseModal.addEventListener('click',e=>{if(e.target===releaseModal)closeRelease()});
       if(localStorage.getItem(RELEASE_KEY)!=='1')openRelease();
     }
+
+    const fileInput=document.getElementById('entryFile'),fileName=document.getElementById('entryFileName'),entryState=document.getElementById('entryState'),startButton=document.getElementById('startButton');
+    const fileHelp=document.getElementById('fileHelpModal'),fileHelpText=document.getElementById('fileHelpText'),fileHelpClose=document.getElementById('fileHelpClose');
+    const showFileHelp=(file)=>{
+      const name=file?.name||'';
+      const webPage=/\.(mht|mhtml|eml)$/i.test(name);
+      fileHelpText.innerHTML=webPage
+        ? 'これは<strong>Google My Mapsのページを保存したファイル</strong>の可能性があります。<br><br>Google My Mapsから<strong>KMZを書き出して</strong>、そのKMZを選択してください。'
+        : 'Creative Modeでは<strong>KMZファイル</strong>を選択してください。';
+      fileHelp.classList.add('open');
+    };
+    if(fileInput){
+      fileInput.addEventListener('change',e=>{
+        const file=fileInput.files?.[0];if(!file)return;
+        if(/\.kmz$/i.test(file.name))return;
+        e.preventDefault();e.stopImmediatePropagation();
+        if(fileName)fileName.textContent=file.name;
+        if(startButton){startButton.disabled=true;startButton.classList.remove('ready')}
+        if(entryState)entryState.textContent='KMZファイルを選択してください。';
+        showFileHelp(file);
+      },true);
+    }
+    if(fileHelpClose)fileHelpClose.onclick=()=>fileHelp.classList.remove('open');
+    if(fileHelp)fileHelp.addEventListener('click',e=>{if(e.target===fileHelp)fileHelp.classList.remove('open')});
+
     const save=document.getElementById('save'),modal=document.getElementById('saveNameModal'),input=document.getElementById('saveNameInput'),cancel=document.getElementById('saveNameCancel'),ok=document.getElementById('saveNameOk');
     if(!save||!modal||!input||!cancel||!ok)return;
     const original=save.onclick;let desired='';
