@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover,user-scalable=no">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>CREATIVE MODE | Save Name Review v2</title>
+</head>
+<body>
+<script>
+(async()=>{
+  const raw='https://raw.githubusercontent.com/Kaityo1221/Campsite-Design-Tool-Next-Lab/agent/creative-dev-batch/creative/index.html';
+  const res=await fetch(raw,{cache:'no-store'});
+  if(!res.ok){document.body.textContent='レビュー画面の読み込みに失敗しました。';return;}
+  let html=await res.text();
+  const patch=`<style>
+  .save-name-modal{position:fixed;inset:0;z-index:99999;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(10,8,6,.52);backdrop-filter:blur(3px)}
+  .save-name-modal.open{display:flex}.save-name-card{width:min(100%,420px);padding:18px;border:1px solid #b89a57;border-radius:20px;background:#fffdf7;color:#382d1d;box-shadow:0 18px 50px rgba(0,0,0,.35)}
+  .save-name-card h2{margin:0 0 6px;font-size:20px}.save-name-card p{margin:0 0 14px;color:#71634e;font-size:12px;line-height:1.55}.save-name-row{display:grid;grid-template-columns:1fr auto;align-items:center;border:2px solid #d7c394;border-radius:14px;background:#fff;padding:0 12px}.save-name-row:focus-within{border-color:#c58c1f;box-shadow:0 0 0 3px rgba(197,140,31,.14)}
+  #saveNameInput{width:100%;height:52px;border:0;outline:0;background:transparent;color:#382d1d;font-size:16px;font-weight:800;min-width:0}.save-name-ext{font-weight:900;color:#8a6b31}.save-name-actions{display:grid;grid-template-columns:1fr 1.35fr;gap:9px;margin-top:14px}.save-name-actions button{min-height:48px;border-radius:13px;font:inherit;font-weight:900}.save-name-cancel{border:1px solid #c8bda8;background:#fff;color:#5d5141}.save-name-ok{border:1px solid #8a6b31;background:linear-gradient(180deg,#f3d77f,#c58c1f);color:#37270c}.save-name-hint{margin-top:9px!important;font-size:10px!important;color:#8c7c65!important}
+  </style>
+  <div id="saveNameModal" class="save-name-modal" role="dialog" aria-modal="true" aria-labelledby="saveNameTitle"><div class="save-name-card"><h2 id="saveNameTitle">ファイル名を決める</h2><p>複数パターンを分けて保存できます。拡張子は自動で <strong>.kmz</strong> になります。</p><div class="save-name-row"><input id="saveNameInput" autocomplete="off" maxlength="100"><span class="save-name-ext">.kmz</span></div><div class="save-name-actions"><button id="saveNameCancel" class="save-name-cancel">キャンセル</button><button id="saveNameOk" class="save-name-ok">この名前で保存</button></div><p class="save-name-hint">未入力の場合は元のファイル名を使います。</p></div></div>
+  <script>
+  (()=>{'use strict';
+    const save=document.getElementById('save'),modal=document.getElementById('saveNameModal'),input=document.getElementById('saveNameInput'),cancel=document.getElementById('saveNameCancel'),ok=document.getElementById('saveNameOk');
+    if(!save||!modal||!input||!cancel||!ok)return;
+    const original=save.onclick;let desired='';
+    const clean=s=>String(s||'').replace(/[\\\\/:*?\"<>|]/g,'_').replace(/\\.kmz$/i,'').trim();
+    function fallback(){const src=(document.getElementById('entryFileName')?.textContent||'').trim();const base=src&&src!=='未選択'?src.replace(/\\.(kmz|kml|zip)$/i,'')+'_creative':'campsite_creative';return clean(base)||'campsite_creative'}
+    function open(){input.value=fallback();modal.classList.add('open');setTimeout(()=>{input.focus();input.select()},30)}
+    function close(){modal.classList.remove('open')}
+    const nativeAnchorClick=HTMLAnchorElement.prototype.click;
+    HTMLAnchorElement.prototype.click=function(){if(this.download&&desired)this.download=desired+'.kmz';return nativeAnchorClick.call(this)};
+    if(typeof showSaveFilePicker==='function'){
+      const nativePicker=showSaveFilePicker.bind(window);
+      window.showSaveFilePicker=opts=>nativePicker({...opts,suggestedName:desired?desired+'.kmz':opts?.suggestedName});
+    }
+    if(navigator.share&&typeof File!=='undefined'){
+      const nativeShare=navigator.share.bind(navigator);
+      try{navigator.share=async data=>{if(desired&&data?.files?.length){data={...data,files:data.files.map(f=>new File([f],desired+'.kmz',{type:f.type,lastModified:f.lastModified}))}}return nativeShare(data)}}catch{}
+    }
+    save.onclick=()=>open();
+    cancel.onclick=()=>{desired='';close()};
+    ok.onclick=()=>{desired=clean(input.value)||fallback();close();if(typeof original==='function')original.call(save)};
+    input.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();ok.click()}else if(e.key==='Escape'){cancel.click()}});
+    modal.addEventListener('click',e=>{if(e.target===modal)cancel.click()});
+  })();
+  <\/script>`;
+  html=html.replace('</body>',patch+'\n</body>');
+  document.open();document.write(html);document.close();
+})().catch(()=>{document.body.textContent='レビュー画面の読み込みに失敗しました。';});
+</script>
+</body>
+</html>
