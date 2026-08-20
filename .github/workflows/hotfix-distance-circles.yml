@@ -1,0 +1,50 @@
+name: hotfix-distance-circles
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/hotfix-distance-circles.yml']
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Patch CREATIVE MODE distance circles
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re, math
+          p=Path('creative/index.html')
+          s=p.read_text()
+          s=s.replace('<div id="layerPanel" class="panel"><h3>▱ レイヤー</h3><div id="layerRows"></div></div><div id="circlePanel" class="panel circle-panel"><h3>◎ 距離円</h3><button data-circle="50">50m</button><button data-circle="40">40m</button><button data-circle="both" class="active">50m + 40m</button><button data-circle="off">非表示</button></div>', '<div id="layerPanel" class="panel"><h3>▱ レイヤー</h3><div id="layerRows"></div></div><div id="circlePanel" class="panel circle-panel"><h3>◎ 距離円</h3><button data-circle="50" class="active" disabled>50m（必須）</button><button data-extra="40">＋ 40m</button><button data-extra="30">＋ 30m</button></div>')
+          s=s.replace("circleMode='both'", "circleMode='50',circleExtras=[]")
+          s=re.sub(r"function circleOpts\(radius\)\{.*?\}\nfunction renderRecordCircles\(\)\{.*?\}\n", "function circleOpts(radius){if(radius===50)return{radius:50,color:'#d18a00',fillColor:'#d18a00',weight:2,fillOpacity:.07,renderer:circleRenderer,pane:'distance',interactive:false};if(radius===40)return{radius:40,color:'#8d62c1',fillColor:'#8d62c1',weight:2,dashArray:'6 5',fillOpacity:.055,renderer:circleRenderer,pane:'distance',interactive:false};return{radius:30,color:'#3e9b68',fillColor:'#3e9b68',weight:2,dashArray:'4 5',fillOpacity:.045,renderer:circleRenderer,pane:'distance',interactive:false}}\nfunction renderRecordCircles(){recordCircleGroup.clearLayers();records.forEach(r=>{if(r.deleted||!map.hasLayer(groups[r.layer]))return;L.circle(r.latlng,circleOpts(50)).addTo(recordCircleGroup);circleExtras.forEach(radius=>L.circle(r.latlng,circleOpts(radius)).addTo(recordCircleGroup))})}\n", s, flags=re.S)
+          s=s.replace("activeLayer,circleMode,polygonVisible", "activeLayer,circleMode,circleExtras,polygonVisible")
+          s=s.replace("circleMode=s.circleMode||'both';", "circleMode='50';circleExtras=Array.isArray(s.circleExtras)?s.circleExtras.filter(x=>x===40||x===30):[];")
+          s=re.sub(r"circlePanel\.querySelectorAll\('button'\)\.forEach\(b=>b\.classList\.toggle\('active',b\.dataset\.circle===circleMode\)\);", "circlePanel.querySelectorAll('[data-extra]').forEach(b=>b.classList.toggle('active',circleExtras.includes(Number(b.dataset.extra))));", s)
+          s=re.sub(r"function placementMode\(\)\{return .*?\}\nfunction updateDraftCircles\(\)\{.*?\}\n", "function placementMode(){return'50'}\nfunction updateDraftCircles(){if(!draft)return;[draft.c50,draft.c40].forEach(x=>map.removeLayer(x));draft.c50.addTo(map).bringToFront();draft.marker.setZIndexOffset(2400)}\n", s, flags=re.S)
+          s=re.sub(r"circlePanel\.querySelectorAll\('button'\)\.forEach\(b=>b\.onclick=\(\)=>\{.*?\}\);", "circlePanel.querySelectorAll('[data-extra]').forEach(b=>b.onclick=()=>{const radius=Number(b.dataset.extra),i=circleExtras.indexOf(radius);if(i>=0)circleExtras.splice(i,1);else circleExtras.push(radius);b.classList.toggle('active',circleExtras.includes(radius));renderRecordCircles();snapshot()});", s, flags=re.S)
+          needle="function directName(el){return[...el.children].find(x=>x.localName==='name')?.textContent?.trim()||''}\n"
+          helper="function circleCoords(lat,lng,radius,steps=48){const R=6378137,lat1=lat*Math.PI/180,lng1=lng*Math.PI/180,d=radius/R,out=[];for(let i=0;i<=steps;i++){const b=2*Math.PI*i/steps,lat2=Math.asin(Math.sin(lat1)*Math.cos(d)+Math.cos(lat1)*Math.sin(d)*Math.cos(b)),lng2=lng1+Math.atan2(Math.sin(b)*Math.sin(d)*Math.cos(lat1),Math.cos(d)-Math.sin(lat1)*Math.sin(lat2));out.push(`${(lng2*180/Math.PI).toFixed(7)},${(lat2*180/Math.PI).toFixed(7)},0`)}return out.join(' ')}\nfunction appendDistanceFolder(xml,doc,radius){const f=makeEl(xml,'Folder');f.appendChild(makeEl(xml,'name',`${radius}m サークル`));records.filter(r=>!r.deleted).forEach((r,i)=>{const pm=makeEl(xml,'Placemark');pm.appendChild(makeEl(xml,'name',`${radius}m ${i+1}`));const style=makeEl(xml,'Style'),ls=makeEl(xml,'LineStyle'),ps=makeEl(xml,'PolyStyle');ls.appendChild(makeEl(xml,'color',radius===50?'ff008ad1':radius===40?'ffc1628d':'ff689b3e'));ls.appendChild(makeEl(xml,'width','2'));ps.appendChild(makeEl(xml,'color',radius===50?'18008ad1':radius===40?'1461628d':'123e9b68'));ps.appendChild(makeEl(xml,'fill','1'));ps.appendChild(makeEl(xml,'outline','1'));style.append(ls,ps);pm.appendChild(style);const poly=makeEl(xml,'Polygon'),outer=makeEl(xml,'outerBoundaryIs'),ring=makeEl(xml,'LinearRing');ring.appendChild(makeEl(xml,'coordinates',circleCoords(r.latlng[0],r.latlng[1],radius)));outer.appendChild(ring);poly.appendChild(outer);pm.appendChild(poly);f.appendChild(pm)});doc.appendChild(f)}\n"
+          if helper not in s:s=s.replace(needle,needle+helper)
+          marker="const pf=makeEl(xml,'Folder');pf.appendChild(makeEl(xml,'name','ポリゴン'));"
+          s=s.replace(marker,"appendDistanceFolder(xml,doc,50);circleExtras.slice().sort((a,b)=>b-a).forEach(radius=>appendDistanceFolder(xml,doc,radius));"+marker)
+          p.write_text(s)
+          PY
+          python - <<'PY'
+          import re
+          from pathlib import Path
+          s=Path('creative/index.html').read_text();m=re.search(r'<script>\s*(\(\(\)=>\{.*?\}\)\(\);)\s*</script>',s,re.S)
+          if not m: raise SystemExit('inline script not found')
+          Path('/tmp/app.js').write_text(m.group(1))
+          PY
+          node --check /tmp/app.js
+          git config user.name "nextlab-hotfix-bot"
+          git config user.email "nextlab-hotfix-bot@users.noreply.github.com"
+          git add creative/index.html
+          git commit -m "Hotfix distance circle export: 50m required, optional 40m/30m"
+          git push origin HEAD:main
