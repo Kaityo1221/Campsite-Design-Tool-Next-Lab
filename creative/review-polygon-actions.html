@@ -14,35 +14,49 @@
   if(!res.ok){document.body.textContent='レビュー画面の読み込みに失敗しました。';return;}
   let html=await res.text();
 
-  const rowOld="b.disabled=true;b.title='表示 / 非表示のみ';";
-  const rowNew="b.disabled=count===0;b.title='やり直し';b.onclick=()=>openPolygonActions();";
-  if(!html.includes(rowOld)){document.body.textContent='ポリゴン操作の更新位置が見つかりません。';return;}
-  html=html.replace(rowOld,rowNew);
+  const selectAnchor='function selectTool(tool){';
+  const bindOld="toolMenu.querySelectorAll('button').forEach(b=>b.onclick=()=>selectTool(b.dataset.tool));";
+  if(!html.includes(selectAnchor)||!html.includes(bindOld)){document.body.textContent='ポリゴン操作の更新位置が見つかりません。';return;}
 
-  const drawAnchor='function drawAll(){';
-  const actions=`
-let polygonActionMenu=null;
-function closePolygonActions(){if(polygonActionMenu){polygonActionMenu.remove();polygonActionMenu=null}}
-function openPolygonActions(){
-  closeMenus();closePolygonActions();
-  const target=polygons.find(p=>!p.deleted);
-  if(!target){msg('ポリゴンはありません');return}
-  const wrap=document.createElement('div'),redo=document.createElement('button'),close=document.createElement('button');
-  Object.assign(wrap.style,{position:'fixed',left:'50%',transform:'translateX(-50%)',bottom:'calc(132px + env(safe-area-inset-bottom))',zIndex:'1600',display:'grid',gridTemplateColumns:'1fr auto',gap:'8px',alignItems:'center',padding:'8px',borderRadius:'16px',background:'rgba(48,40,29,.96)',boxShadow:'0 8px 24px rgba(0,0,0,.28)'});
-  const common={height:'48px',padding:'0 18px',border:'2px solid #8a6b31',borderRadius:'13px',fontWeight:'950',fontSize:'14px'};
-  redo.type='button';redo.textContent='↻ やり直し';Object.assign(redo.style,common,{background:'#fff8e6',color:'#37270c',minWidth:'180px'});
-  close.type='button';close.textContent='×';Object.assign(close.style,{width:'44px',height:'44px',border:'2px solid #8a6b31',borderRadius:'13px',background:'#fffdf7',color:'#5d4630',fontWeight:'950',fontSize:'22px'});
-  wrap.append(redo,close);document.body.appendChild(wrap);polygonActionMenu=wrap;
-  close.onclick=closePolygonActions;
-  redo.onclick=()=>{
-    if(!confirm('現在のポリゴンを削除して、最初から描き直しますか？'))return;
-    target.deleted=true;closePolygonActions();drawAll();renderLayerPanel();snapshot();
-    activeTool='polygon';renderTools();beginCrosshairPolygon();msg('ポリゴンを最初から描き直してください',2200);
-  };
+  const helpers=`
+let polygonToolMenu=null;
+function closePolygonToolMenu(){if(polygonToolMenu){polygonToolMenu.remove();polygonToolMenu=null}}
+function beginAnotherPolygon(){closePolygonToolMenu();activeTool='polygon';clearDraft();clearRuler();beginCrosshairPolygon();renderTools();msg('追加するポリゴンを描いてください',2200)}
+function deletePolygonByIndex(index){
+  const list=polygons.filter(p=>!p.deleted),target=list[index];if(!target)return;
+  if(!confirm('このポリゴンを削除しますか？'))return;
+  target.deleted=true;closePolygonToolMenu();drawAll();renderLayerPanel();snapshot();msg('ポリゴンを削除しました');
+}
+function openPolygonDeleteList(){
+  closePolygonToolMenu();
+  const list=polygons.filter(p=>!p.deleted);if(!list.length){msg('削除できるポリゴンはありません');return}
+  if(list.length===1){deletePolygonByIndex(0);return}
+  const wrap=document.createElement('div'),title=document.createElement('div'),buttons=document.createElement('div'),close=document.createElement('button');
+  Object.assign(wrap.style,{position:'fixed',left:'50%',transform:'translateX(-50%)',bottom:'calc(132px + env(safe-area-inset-bottom))',zIndex:'1600',width:'min(330px,88vw)',padding:'10px',borderRadius:'16px',background:'rgba(48,40,29,.97)',boxShadow:'0 8px 24px rgba(0,0,0,.28)',color:'#fff8e8'});
+  title.textContent='削除するポリゴンを選択';Object.assign(title.style,{fontWeight:'950',fontSize:'13px',margin:'0 0 8px'});
+  Object.assign(buttons.style,{display:'grid',gap:'7px'});
+  list.forEach((_,i)=>{const b=document.createElement('button');b.type='button';b.textContent='ポリゴン '+(i+1)+' を削除';Object.assign(b.style,{height:'44px',border:'2px solid #c88179',borderRadius:'12px',background:'#fff0ee',color:'#8c2f28',fontWeight:'950'});b.onclick=()=>deletePolygonByIndex(i);buttons.appendChild(b)});
+  close.type='button';close.textContent='キャンセル';Object.assign(close.style,{width:'100%',height:'42px',marginTop:'8px',border:'2px solid #8a6b31',borderRadius:'12px',background:'#fffdf7',color:'#37270c',fontWeight:'950'});close.onclick=closePolygonToolMenu;
+  wrap.append(title,buttons,close);document.body.appendChild(wrap);polygonToolMenu=wrap;
+}
+function openPolygonChoice(){
+  closeMenus();closePolygonToolMenu();
+  const count=polygons.filter(p=>!p.deleted).length;
+  if(!count){beginAnotherPolygon();return}
+  const wrap=document.createElement('div'),title=document.createElement('div'),add=document.createElement('button'),del=document.createElement('button'),close=document.createElement('button');
+  Object.assign(wrap.style,{position:'fixed',left:'50%',transform:'translateX(-50%)',bottom:'calc(132px + env(safe-area-inset-bottom))',zIndex:'1600',width:'min(330px,88vw)',padding:'10px',borderRadius:'16px',background:'rgba(48,40,29,.97)',boxShadow:'0 8px 24px rgba(0,0,0,.28)',color:'#fff8e8'});
+  title.textContent=count+'個のポリゴンがあります';Object.assign(title.style,{fontWeight:'950',fontSize:'13px',margin:'0 0 8px'});
+  const common={width:'100%',height:'48px',borderRadius:'13px',fontWeight:'950',fontSize:'14px'};
+  add.type='button';add.textContent='＋ ポリゴンを追加';Object.assign(add.style,common,{border:'2px solid #8a6b31',background:'#fff8e6',color:'#37270c'});
+  del.type='button';del.textContent='削除する';Object.assign(del.style,common,{marginTop:'7px',border:'2px solid #c88179',background:'#fff0ee',color:'#8c2f28'});
+  close.type='button';close.textContent='キャンセル';Object.assign(close.style,common,{marginTop:'7px',height:'42px',border:'2px solid #8a6b31',background:'#fffdf7',color:'#37270c'});
+  add.onclick=beginAnotherPolygon;del.onclick=openPolygonDeleteList;close.onclick=closePolygonToolMenu;
+  wrap.append(title,add,del,close);document.body.appendChild(wrap);polygonToolMenu=wrap;
 }
 `;
-  if(!html.includes(drawAnchor)){document.body.textContent='ポリゴン操作の関数位置が見つかりません。';return;}
-  html=html.replace(drawAnchor,actions+drawAnchor);
+
+  html=html.replace(selectAnchor,helpers+selectAnchor);
+  html=html.replace(bindOld,"toolMenu.querySelectorAll('button').forEach(b=>b.onclick=()=>b.dataset.tool==='polygon'?openPolygonChoice():selectTool(b.dataset.tool));");
 
   document.open();document.write(html);document.close();
 })().catch(()=>{document.body.textContent='レビュー画面の読み込みに失敗しました。';});
