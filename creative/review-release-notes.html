@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover,user-scalable=no">
 <meta name="robots" content="noindex,nofollow,noarchive">
-<title>CREATIVE MODE | Release Notes Review</title>
+<title>CREATIVE MODE | CSV / KMZ Review</title>
 </head>
 <body>
 <script>
@@ -13,84 +13,87 @@
   const res=await fetch(raw,{cache:'no-store'});
   if(!res.ok){document.body.textContent='レビュー画面の読み込みに失敗しました。';return;}
   let html=await res.text();
-  /* UI only: keep the existing file-input/startup logic untouched. */
-  html=html.replace('KMZ / KMLを選択','KMZを選択');
-  html=html.replace('ファイルを選択してください。','編集するKMZを選択してください。');
+
+  html=html.replace('KMZ / KMLを選択','CSV / KMZを選択');
+  html=html.replace('ファイルを選択してください。','編集するCSV / KMZを選択してください。');
+  html=html.replace('<input id="entryFile" type="file">','<input id="entryFile" type="file" multiple accept=".csv,.kmz">');
+  html=html.replace("pendingFile=null,activeLayer=", "pendingFile=null,pendingFiles=[],activeLayer=");
+
+  const csvHelpers=`
+function csvRows(text){
+  const rows=[];let row=[],value='',quoted=false;
+  for(let i=0;i<text.length;i++){
+    const ch=text[i],next=text[i+1];
+    if(ch==='"'&&quoted&&next==='"'){value+='"';i++;continue}
+    if(ch==='"'){quoted=!quoted;continue}
+    if(ch===','&&!quoted){row.push(value);value='';continue}
+    if((ch==='\\n'||ch==='\\r')&&!quoted){if(ch==='\\r'&&next==='\\n')i++;row.push(value);if(row.some(x=>String(x).trim()!==''))rows.push(row);row=[];value='';continue}
+    value+=ch;
+  }
+  row.push(value);if(row.some(x=>String(x).trim()!==''))rows.push(row);return rows;
+}
+function csvPick(obj,keys){for(const k of keys){if(obj[k]!==undefined&&obj[k]!==null&&String(obj[k]).trim()!=='')return obj[k]}return''}
+function csvLayer(fileName,title,type,status){
+  const h=(fileName+' '+title+' '+type+' '+status).toLowerCase(),fresh=/追加|新規|候補|add|new|planned/.test(h);
+  if(/gym|ジム/.test(h))return fresh?'new-gym':'existing-gym';
+  if(/power|パワー/.test(h))return fresh?'new-power':'existing-power';
+  return fresh?'new-pokestop':'existing-pokestop';
+}
+async function loadCsvFiles(files){
+  records=[];polygons=[];sourceZip=null;sourceKmlPath='doc.kml';sourceIsKmz=false;
+  sourceText='<?xml version="1.0" encoding="UTF-8"?><kml xmlns="http://www.opengis.net/kml/2.2"><Document/></kml>';
+  sourceName=files.length===1?(files[0].name.replace(/\\.csv$/i,'')||'campsite'):'CSV_'+files.length+'files';
+  const seen=new Set(),bounds=[];
+  for(const file of files){
+    const rows=csvRows(await file.text());if(rows.length<2)continue;
+    const headers=rows[0].map(x=>String(x||'').trim());
+    for(const row of rows.slice(1)){
+      const obj={};headers.forEach((h,i)=>obj[h]=row[i]??'');
+      const title=String(csvPick(obj,['title','Title','name','Name','wayspotTitle','Wayspot Title','タイトル','名前'])||row[0]||'名称なし').trim()||'名称なし';
+      const lat=Number(csvPick(obj,['lat','Lat','latitude','Latitude','緯度']));
+      const lng=Number(csvPick(obj,['lng','Lng','lon','Lon','longitude','Longitude','経度']));
+      if(!Number.isFinite(lat)||!Number.isFinite(lng))continue;
+      const type=String(csvPick(obj,['gameEntity','GameEntity','game_entity','Game Entity','type','Type','category','Category','種類'])||'');
+      const status=String(csvPick(obj,['gameStatus','GameStatus','game_status','Game Status','status','Status'])||'');
+      const guid=String(csvPick(obj,['guid','GUID','id','ID','wayspotId','Wayspot ID'])||'').trim();
+      const key=guid?'g:'+guid:'c:'+lat.toFixed(7)+','+lng.toFixed(7)+':'+title;
+      if(seen.has(key))continue;seen.add(key);
+      const layer=csvLayer(file.name,title,type,status);
+      const r={id:crypto.randomUUID?.()||String(Math.random()),layer,latlng:[lat,lng],title,memo:'',deleted:false,source:true};
+      records.push(r);bounds.push(r.latlng);
+    }
+  }
+  polygonVisible=false;drawAll();renderLayerPanel();if(bounds.length)map.fitBounds(bounds,{padding:[28,28],maxZoom:18});
+  return records.length;
+}
+function exportLayerCount(){
+  let count=layerDefs.filter(([k])=>records.some(r=>r.layer===k&&!r.deleted)).length;
+  if(polygons.some(p=>!p.deleted))count++;
+  return count;
+}
+function estimatedKmlBytes(){try{return new TextEncoder().encode(buildMyMapsKml()).length}catch{return 0}}
+`;
+  html=html.replace('function beginEditor(){',csvHelpers+'\nfunction beginEditor(){');
+
+  const oldFlow="function beginEditor(){entry.classList.add('hidden');setTimeout(()=>map.invalidateSize(),50)}entryFile.onchange=()=>{const f=entryFile.files?.[0];if(!f)return;pendingFile=f;$('entryFileName').textContent=f.name;const ok=/\\.(kmz|kml|zip)$/i.test(f.name);start.disabled=!ok;start.classList.toggle('ready',ok);$('entryState').textContent=ok?'ファイルを読み込めます。':'KMZ / KML / ZIP を選択してください。'};start.onclick=async()=>{if(!pendingFile)return;try{parse(await readFile(pendingFile));snapshot();beginEditor()}catch(e){$('entryState').textContent=e.message||'読み込み失敗'}};";
+  const newFlow="function beginEditor(){entry.classList.add('hidden');setTimeout(()=>map.invalidateSize(),50)}entryFile.onchange=()=>{const files=Array.from(entryFile.files||[]);pendingFiles=files;pendingFile=files[0]||null;if(!files.length)return;const csvs=files.filter(f=>/\\.csv$/i.test(f.name)),kmzs=files.filter(f=>/\\.kmz$/i.test(f.name)),invalid=files.filter(f=>!/[.](csv|kmz)$/i.test(f.name));let ok=false,text='';if(invalid.length){text='CSVまたはKMZを選択してください。'}else if(csvs.length&&kmzs.length){text='CSVとKMZは同時に選択できません。どちらか一方を選択してください。'}else if(kmzs.length){ok=kmzs.length===1;if(!ok)text='KMZは1ファイルだけ選択してください。';else if(kmzs[0].size>5*1024*1024){ok=false;text='KMZが5MBを超えています。Google My Mapsの上限を想定し、5MB以下にしてください。'}else text='KMZを読み込めます。'}else if(csvs.length){ok=true;const total=csvs.reduce((s,f)=>s+f.size,0);text=total>=4.5*1024*1024?'CSV合計が4.5MBを超えています。読み込み後に生成サイズを確認します。':csvs.length+'件のCSVをまとめて読み込めます。'}$('entryFileName').textContent=files.length===1?files[0].name:files.length+'ファイル選択';start.disabled=!ok;start.classList.toggle('ready',ok);$('entryState').textContent=text};start.onclick=async()=>{if(!pendingFiles.length)return;try{const csvMode=pendingFiles.every(f=>/\\.csv$/i.test(f.name));if(csvMode){const count=await loadCsvFiles(pendingFiles);if(!count){$('entryState').textContent='有効な緯度・経度を持つPOIが見つかりませんでした。';return}const layers=exportLayerCount();if(layers>10){$('entryState').textContent='レイヤー数が10を超えるため開始できません。';return}const bytes=estimatedKmlBytes();if(bytes>5*1024*1024){$('entryState').textContent='生成データが5MBを超える見込みです。CSVを減らしてください。';return}if(bytes>=4.5*1024*1024&&!confirm('生成データが約'+(bytes/1024/1024).toFixed(2)+'MBです。5MB上限に近いため、このまま続けますか？'))return;msg('CSV '+pendingFiles.length+'件を統合：'+count+'地点 / '+layers+'レイヤー',1800)}else{parse(await readFile(pendingFiles[0]))}snapshot();beginEditor()}catch(e){$('entryState').textContent=e.message||'読み込み失敗'}};";
+  if(!html.includes(oldFlow)){document.body.textContent='CSV / KMZレビューの更新位置が見つかりません。';return;}
+  html=html.replace(oldFlow,newFlow);
+
   const patch=`<style>
   .lab-update-pill{position:absolute;right:12px;bottom:12px;z-index:20;min-height:34px;padding:0 11px;border:1px solid rgba(255,239,200,.48);border-radius:999px;background:rgba(38,33,25,.88);color:#fff8e8;display:flex;align-items:center;gap:7px;font-size:9px;font-weight:950;letter-spacing:.04em;box-shadow:0 4px 12px rgba(0,0,0,.24)}
   .lab-update-pill .new{padding:3px 6px;border-radius:999px;background:linear-gradient(180deg,#f3d77f,#c58c1f);color:#37270c;font-size:8px}.lab-update-pill .ver{color:#f7dfaa}
-  .lab-release-modal{position:absolute;inset:0;z-index:40;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(10,8,6,.52);backdrop-filter:blur(4px)}
-  .lab-release-modal.open{display:flex}.lab-release-card{width:min(100%,430px);padding:18px;border:1px solid rgba(255,239,200,.55);border-radius:22px;background:rgba(38,33,25,.90);color:#fff8e8;box-shadow:0 18px 50px rgba(0,0,0,.38);text-align:left}
-  .lab-release-head{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:9px}.lab-release-badge{padding:4px 7px;border-radius:999px;background:linear-gradient(180deg,#f3d77f,#c58c1f);color:#37270c;font-size:9px;font-weight:950;letter-spacing:.08em}.lab-release-title{font-size:13px;font-weight:950}.lab-release-ver{font-size:10px;font-weight:850;color:#f7dfaa}
-  .lab-release-card ul{margin:15px 0 8px;padding-left:20px}.lab-release-card li{margin:6px 0;font-size:12px;line-height:1.55;font-weight:800}.lab-release-note{font-size:10px;color:rgba(255,248,232,.72)}.lab-release-close{width:100%;min-height:42px;margin-top:14px;border:1px solid rgba(255,239,200,.42);border-radius:12px;background:rgba(255,248,232,.10);color:#fff8e8;font-size:11px;font-weight:900}
-  .save-name-modal,.file-help-modal{position:fixed;inset:0;z-index:99999;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(10,8,6,.52);backdrop-filter:blur(3px)}
-  .save-name-modal.open,.file-help-modal.open{display:flex}.save-name-card,.file-help-card{width:min(100%,420px);padding:18px;border:1px solid #b89a57;border-radius:20px;background:#fffdf7;color:#382d1d;box-shadow:0 18px 50px rgba(0,0,0,.35)}
-  .save-name-card h2,.file-help-card h2{margin:0 0 6px;font-size:20px}.save-name-card p,.file-help-card p{margin:0 0 14px;color:#71634e;font-size:12px;line-height:1.6}.save-name-row{display:grid;grid-template-columns:1fr auto;align-items:center;border:2px solid #d7c394;border-radius:14px;background:#fff;padding:0 12px}.save-name-row:focus-within{border-color:#c58c1f;box-shadow:0 0 0 3px rgba(197,140,31,.14)}
-  #saveNameInput{width:100%;height:52px;border:0;outline:0;background:transparent;color:#382d1d;font-size:16px;font-weight:800;min-width:0}.save-name-ext{font-weight:900;color:#8a6b31}.save-name-actions{display:grid;grid-template-columns:1fr 1.35fr;gap:9px;margin-top:14px}.save-name-actions button,.file-help-close{min-height:48px;border-radius:13px;font:inherit;font-weight:900}.save-name-cancel{border:1px solid #c8bda8;background:#fff;color:#5d5141}.save-name-ok,.file-help-close{border:1px solid #8a6b31;background:linear-gradient(180deg,#f3d77f,#c58c1f);color:#37270c}.save-name-hint{margin-top:9px!important;font-size:10px!important;color:#8c7c65!important}.file-help-icon{font-size:30px;margin-bottom:8px}.file-help-close{width:100%}.file-help-card strong{color:#5f4314}
+  .lab-release-modal{position:absolute;inset:0;z-index:40;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(10,8,6,.52);backdrop-filter:blur(4px)}.lab-release-modal.open{display:flex}.lab-release-card{width:min(100%,430px);padding:18px;border:1px solid rgba(255,239,200,.55);border-radius:22px;background:rgba(38,33,25,.90);color:#fff8e8;box-shadow:0 18px 50px rgba(0,0,0,.38);text-align:left}.lab-release-head{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:9px}.lab-release-badge{padding:4px 7px;border-radius:999px;background:linear-gradient(180deg,#f3d77f,#c58c1f);color:#37270c;font-size:9px;font-weight:950}.lab-release-title{font-size:13px;font-weight:950}.lab-release-ver{font-size:10px;font-weight:850;color:#f7dfaa}.lab-release-card ul{margin:15px 0 8px;padding-left:20px}.lab-release-card li{margin:6px 0;font-size:12px;line-height:1.55;font-weight:800}.lab-release-close{width:100%;min-height:42px;margin-top:14px;border:1px solid rgba(255,239,200,.42);border-radius:12px;background:rgba(255,248,232,.10);color:#fff8e8;font-size:11px;font-weight:900}
+  .save-name-modal,.file-help-modal{position:fixed;inset:0;z-index:99999;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(10,8,6,.52);backdrop-filter:blur(3px)}.save-name-modal.open,.file-help-modal.open{display:flex}.save-name-card,.file-help-card{width:min(100%,420px);padding:18px;border:1px solid #b89a57;border-radius:20px;background:#fffdf7;color:#382d1d;box-shadow:0 18px 50px rgba(0,0,0,.35)}.save-name-card h2,.file-help-card h2{margin:0 0 6px;font-size:20px}.save-name-card p,.file-help-card p{margin:0 0 14px;color:#71634e;font-size:12px;line-height:1.6}.save-name-row{display:grid;grid-template-columns:1fr auto;align-items:center;border:2px solid #d7c394;border-radius:14px;background:#fff;padding:0 12px}.save-name-row:focus-within{border-color:#c58c1f}.save-name-row input{width:100%;height:52px;border:0;outline:0;background:transparent;font-size:16px;font-weight:800;min-width:0}.save-name-ext{font-weight:900;color:#8a6b31}.save-name-actions{display:grid;grid-template-columns:1fr 1.35fr;gap:9px;margin-top:14px}.save-name-actions button,.file-help-close{min-height:48px;border-radius:13px;font:inherit;font-weight:900}.save-name-cancel{border:1px solid #c8bda8;background:#fff;color:#5d5141}.save-name-ok,.file-help-close{border:1px solid #8a6b31;background:linear-gradient(180deg,#f3d77f,#c58c1f);color:#37270c}.file-help-close{width:100%}
   </style>
-  <div id="saveNameModal" class="save-name-modal" role="dialog" aria-modal="true" aria-labelledby="saveNameTitle"><div class="save-name-card"><h2 id="saveNameTitle">ファイル名を決める</h2><p>複数パターンを分けて保存できます。拡張子は自動で <strong>.kmz</strong> になります。</p><div class="save-name-row"><input id="saveNameInput" autocomplete="off" maxlength="100"><span class="save-name-ext">.kmz</span></div><div class="save-name-actions"><button id="saveNameCancel" class="save-name-cancel">キャンセル</button><button id="saveNameOk" class="save-name-ok">この名前で保存</button></div><p class="save-name-hint">未入力の場合は元のファイル名を使います。</p></div></div>
-  <div id="fileHelpModal" class="file-help-modal" role="dialog" aria-modal="true" aria-labelledby="fileHelpTitle"><div class="file-help-card"><div class="file-help-icon">📄→🗺️</div><h2 id="fileHelpTitle">このファイルは読み込めません</h2><p id="fileHelpText">Creative ModeではKMZファイルを選択してください。</p><button id="fileHelpClose" type="button" class="file-help-close">OK</button></div></div>
+  <div id="saveNameModal" class="save-name-modal"><div class="save-name-card"><h2>ファイル名を決める</h2><p>複数パターンを分けて保存できます。拡張子は自動で <strong>.kmz</strong> になります。</p><div class="save-name-row"><input id="saveNameInput" autocomplete="off" maxlength="100"><span class="save-name-ext">.kmz</span></div><div class="save-name-actions"><button id="saveNameCancel" class="save-name-cancel">キャンセル</button><button id="saveNameOk" class="save-name-ok">この名前で保存</button></div></div></div>
+  <div id="fileHelpModal" class="file-help-modal"><div class="file-help-card"><h2>このファイルは読み込めません</h2><p id="fileHelpText">CSVまたはKMZを選択してください。</p><button id="fileHelpClose" class="file-help-close">OK</button></div></div>
   <script>
   (()=>{'use strict';
-    const RELEASE_KEY='next-lab-release-seen-20260820-b';
     const entry=document.getElementById('entry');
-    if(entry){
-      const pill=document.createElement('button');pill.type='button';pill.className='lab-update-pill';pill.innerHTML='<span class="new">NEW</span><span>LAB UPDATE</span><span class="ver">vNext</span>';
-      const releaseModal=document.createElement('div');releaseModal.className='lab-release-modal';releaseModal.innerHTML='<div class="lab-release-card"><div class="lab-release-head"><span class="lab-release-badge">NEW</span><span class="lab-release-title">LAB UPDATE</span><span class="lab-release-ver">vNext</span></div><ul><li>保存時にファイル名を変更できるようになりました。</li><li>KMZ以外を選んだ時の案内を分かりやすくしました。</li></ul><div class="lab-release-note">今回の主な更新内容です。</div><button type="button" class="lab-release-close">閉じる</button></div>';
-      entry.append(pill,releaseModal);
-      const close=releaseModal.querySelector('.lab-release-close');
-      const openRelease=()=>releaseModal.classList.add('open');
-      const closeRelease=()=>{releaseModal.classList.remove('open');localStorage.setItem(RELEASE_KEY,'1')};
-      pill.onclick=openRelease;close.onclick=closeRelease;releaseModal.addEventListener('click',e=>{if(e.target===releaseModal)closeRelease()});
-      if(localStorage.getItem(RELEASE_KEY)!=='1')openRelease();
-    }
-
-    const fileInput=document.getElementById('entryFile'),fileName=document.getElementById('entryFileName'),entryState=document.getElementById('entryState'),startButton=document.getElementById('startButton');
-    const fileHelp=document.getElementById('fileHelpModal'),fileHelpText=document.getElementById('fileHelpText'),fileHelpClose=document.getElementById('fileHelpClose');
-    const showFileHelp=(file)=>{
-      const name=file?.name||'';
-      const webPage=/\.(mht|mhtml|eml)$/i.test(name);
-      fileHelpText.innerHTML=webPage
-        ? 'これは<strong>Google My Mapsのページを保存したファイル</strong>の可能性があります。<br><br>Google My Mapsから<strong>KMZを書き出して</strong>、そのKMZを選択してください。'
-        : 'Creative Modeでは<strong>KMZファイル</strong>を選択してください。';
-      fileHelp.classList.add('open');
-    };
-    if(fileInput){
-      fileInput.addEventListener('change',e=>{
-        const file=fileInput.files?.[0];if(!file)return;
-        if(/\.kmz$/i.test(file.name))return;
-        e.preventDefault();e.stopImmediatePropagation();
-        if(fileName)fileName.textContent=file.name;
-        if(startButton){startButton.disabled=true;startButton.classList.remove('ready')}
-        if(entryState)entryState.textContent='KMZファイルを選択してください。';
-        showFileHelp(file);
-      },true);
-    }
-    if(fileHelpClose)fileHelpClose.onclick=()=>fileHelp.classList.remove('open');
-    if(fileHelp)fileHelp.addEventListener('click',e=>{if(e.target===fileHelp)fileHelp.classList.remove('open')});
-
-    const save=document.getElementById('save'),modal=document.getElementById('saveNameModal'),input=document.getElementById('saveNameInput'),cancel=document.getElementById('saveNameCancel'),ok=document.getElementById('saveNameOk');
-    if(!save||!modal||!input||!cancel||!ok)return;
-    const original=save.onclick;let desired='';
-    const clean=s=>String(s||'').replace(/[\\\\/:*?\"<>|]/g,'_').replace(/\\.kmz$/i,'').trim();
-    function fallback(){const src=(document.getElementById('entryFileName')?.textContent||'').trim();const base=src&&src!=='未選択'?src.replace(/\\.(kmz|kml|zip)$/i,'')+'_creative':'campsite_creative';return clean(base)||'campsite_creative'}
-    function open(){input.value=fallback();modal.classList.add('open');setTimeout(()=>{input.focus();input.select()},30)}
-    function closeModal(){modal.classList.remove('open')}
-    const nativeAnchorClick=HTMLAnchorElement.prototype.click;
-    HTMLAnchorElement.prototype.click=function(){if(this.download&&desired)this.download=desired+'.kmz';return nativeAnchorClick.call(this)};
-    if(typeof showSaveFilePicker==='function'){
-      const nativePicker=showSaveFilePicker.bind(window);
-      window.showSaveFilePicker=opts=>nativePicker({...opts,suggestedName:desired?desired+'.kmz':opts?.suggestedName});
-    }
-    if(navigator.share&&typeof File!=='undefined'){
-      const nativeShare=navigator.share.bind(navigator);
-      try{navigator.share=async data=>{if(desired&&data?.files?.length){data={...data,files:data.files.map(f=>new File([f],desired+'.kmz',{type:f.type,lastModified:f.lastModified}))}}return nativeShare(data)}}catch{}
-    }
-    save.onclick=()=>open();
-    cancel.onclick=()=>{desired='';closeModal()};
-    ok.onclick=()=>{desired=clean(input.value)||fallback();closeModal();if(typeof original==='function')original.call(save)};
-    input.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();ok.click()}else if(e.key==='Escape'){cancel.click()}});
-    modal.addEventListener('click',e=>{if(e.target===modal)cancel.click()});
+    if(entry){const pill=document.createElement('button');pill.type='button';pill.className='lab-update-pill';pill.innerHTML='<span class="new">NEW</span><span>LAB UPDATE</span><span class="ver">vNext</span>';const modal=document.createElement('div');modal.className='lab-release-modal';modal.innerHTML='<div class="lab-release-card"><div class="lab-release-head"><span class="lab-release-badge">NEW</span><span class="lab-release-title">LAB UPDATE</span><span class="lab-release-ver">vNext</span></div><ul><li>保存時にファイル名を変更できます。</li><li>CSVは複数選択、KMZは1ファイルで読み込めます。</li><li>5MB・10レイヤーのMy Maps上限を事前チェックします。</li></ul><button type="button" class="lab-release-close">閉じる</button></div>';entry.append(pill,modal);const close=modal.querySelector('.lab-release-close');pill.onclick=()=>modal.classList.add('open');close.onclick=()=>{modal.classList.remove('open');localStorage.setItem('next-lab-release-seen-20260820-c','1')};if(localStorage.getItem('next-lab-release-seen-20260820-c')!=='1')modal.classList.add('open')}
+    const fi=document.getElementById('entryFile'),help=document.getElementById('fileHelpModal'),helpText=document.getElementById('fileHelpText'),helpClose=document.getElementById('fileHelpClose');if(fi)fi.addEventListener('change',e=>{const files=Array.from(fi.files||[]);if(!files.length||files.every(f=>/[.](csv|kmz)$/i.test(f.name)))return;const f=files.find(x=>!/[.](csv|kmz)$/i.test(x.name));e.preventDefault();e.stopImmediatePropagation();helpText.innerHTML=/[.](mht|mhtml|eml)$/i.test(f.name)?'これは<strong>Google My Mapsのページを保存したファイル</strong>の可能性があります。<br><br>My Mapsから<strong>KMZを書き出して</strong>読み込んでください。':'Creative Modeでは<strong>CSVまたはKMZ</strong>を選択してください。KMLは正式サポート対象外です。';help.classList.add('open')},true);if(helpClose)helpClose.onclick=()=>help.classList.remove('open');
+    const save=document.getElementById('save'),sm=document.getElementById('saveNameModal'),input=document.getElementById('saveNameInput'),cancel=document.getElementById('saveNameCancel'),ok=document.getElementById('saveNameOk');if(!save||!sm)return;const original=save.onclick;let desired='';const clean=s=>String(s||'').replace(/[\\\\/:*?\"<>|]/g,'_').replace(/\\.kmz$/i,'').trim();function fallback(){const src=(document.getElementById('entryFileName')?.textContent||'').trim();return clean(src.replace(/\\.(csv|kmz|kml|zip)$/i,'')+'_creative')||'campsite_creative'}save.onclick=()=>{input.value=fallback();sm.classList.add('open')};cancel.onclick=()=>{desired='';sm.classList.remove('open')};ok.onclick=()=>{desired=clean(input.value)||fallback();sm.classList.remove('open');if(typeof original==='function')original.call(save)};const nativeClick=HTMLAnchorElement.prototype.click;HTMLAnchorElement.prototype.click=function(){if(this.download&&desired)this.download=desired+'.kmz';return nativeClick.call(this)};if(navigator.share&&typeof File!=='undefined'){const ns=navigator.share.bind(navigator);try{navigator.share=async data=>{if(desired&&data?.files?.length)data={...data,files:data.files.map(f=>new File([f],desired+'.kmz',{type:f.type,lastModified:f.lastModified}))};return ns(data)}catch{}}
   })();
   <\/script>`;
   html=html.replace('</body>',patch+'\n</body>');
