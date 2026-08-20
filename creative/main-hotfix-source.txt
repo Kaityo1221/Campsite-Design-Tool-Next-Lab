@@ -1,0 +1,3 @@
+main creative/index.html blob: 1f45967ccab0baed6597e522450842d00b29461b
+main tip checked: 4cb9e2c180d5750366d88497bff651950891fc1e
+Purpose: record exact hotfix source before vNext compatibility merge.
