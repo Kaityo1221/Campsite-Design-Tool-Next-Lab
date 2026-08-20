@@ -15,7 +15,7 @@
   let html=await res.text();
 
   const rowOld="b.disabled=true;b.title='表示 / 非表示のみ';";
-  const rowNew="b.disabled=count===0;b.title='やり直し / Delete';b.onclick=()=>openPolygonActions();";
+  const rowNew="b.disabled=count===0;b.title='やり直し';b.onclick=()=>openPolygonActions();";
   if(!html.includes(rowOld)){document.body.textContent='ポリゴン操作の更新位置が見つかりません。';return;}
   html=html.replace(rowOld,rowNew);
 
@@ -27,18 +27,13 @@ function openPolygonActions(){
   closeMenus();closePolygonActions();
   const target=polygons.find(p=>!p.deleted);
   if(!target){msg('ポリゴンはありません');return}
-  const wrap=document.createElement('div'),redo=document.createElement('button'),del=document.createElement('button'),close=document.createElement('button');
-  Object.assign(wrap.style,{position:'fixed',left:'50%',transform:'translateX(-50%)',bottom:'calc(132px + env(safe-area-inset-bottom))',zIndex:'1600',display:'grid',gridTemplateColumns:'1fr 1fr auto',gap:'8px',alignItems:'center',padding:'8px',borderRadius:'16px',background:'rgba(48,40,29,.96)',boxShadow:'0 8px 24px rgba(0,0,0,.28)'});
-  const common={height:'48px',padding:'0 14px',border:'2px solid #8a6b31',borderRadius:'13px',fontWeight:'950',fontSize:'14px'};
-  redo.type='button';redo.textContent='↻ やり直し';Object.assign(redo.style,common,{background:'#fff8e6',color:'#37270c'});
-  del.type='button';del.textContent='Delete';Object.assign(del.style,common,{background:'#fff0ee',color:'#8c2f28',borderColor:'#c88179'});
+  const wrap=document.createElement('div'),redo=document.createElement('button'),close=document.createElement('button');
+  Object.assign(wrap.style,{position:'fixed',left:'50%',transform:'translateX(-50%)',bottom:'calc(132px + env(safe-area-inset-bottom))',zIndex:'1600',display:'grid',gridTemplateColumns:'1fr auto',gap:'8px',alignItems:'center',padding:'8px',borderRadius:'16px',background:'rgba(48,40,29,.96)',boxShadow:'0 8px 24px rgba(0,0,0,.28)'});
+  const common={height:'48px',padding:'0 18px',border:'2px solid #8a6b31',borderRadius:'13px',fontWeight:'950',fontSize:'14px'};
+  redo.type='button';redo.textContent='↻ やり直し';Object.assign(redo.style,common,{background:'#fff8e6',color:'#37270c',minWidth:'180px'});
   close.type='button';close.textContent='×';Object.assign(close.style,{width:'44px',height:'44px',border:'2px solid #8a6b31',borderRadius:'13px',background:'#fffdf7',color:'#5d4630',fontWeight:'950',fontSize:'22px'});
-  wrap.append(redo,del,close);document.body.appendChild(wrap);polygonActionMenu=wrap;
+  wrap.append(redo,close);document.body.appendChild(wrap);polygonActionMenu=wrap;
   close.onclick=closePolygonActions;
-  del.onclick=()=>{
-    if(!confirm('このポリゴンを削除しますか？'))return;
-    target.deleted=true;closePolygonActions();drawAll();renderLayerPanel();snapshot();msg('ポリゴンを削除しました');
-  };
   redo.onclick=()=>{
     if(!confirm('現在のポリゴンを削除して、最初から描き直しますか？'))return;
     target.deleted=true;closePolygonActions();drawAll();renderLayerPanel();snapshot();
