@@ -19,36 +19,42 @@
   if(!html.includes(selectAnchor)||!html.includes(bindOld)){document.body.textContent='ポリゴン操作の更新位置が見つかりません。';return;}
 
   const helpers=`
-let polygonToolMenu=null,polygonDeleteOverlays=[],polygonDeleteCancel=null;
+let polygonToolMenu=null,polygonDeleteLayers=[],polygonDeleteSelected=null,polygonDeleteAction=null;
 function closePolygonToolMenu(){if(polygonToolMenu){polygonToolMenu.remove();polygonToolMenu=null}}
-function stopPolygonDeleteMode(){
-  polygonDeleteOverlays.forEach(x=>map.removeLayer(x));polygonDeleteOverlays=[];
-  if(polygonDeleteCancel){polygonDeleteCancel.remove();polygonDeleteCancel=null}
+function clearPolygonDeleteAction(){if(polygonDeleteAction){polygonDeleteAction.remove();polygonDeleteAction=null}}
+function clearPolygonDeleteMode(){
+  clearPolygonDeleteAction();
+  polygonDeleteLayers.forEach(x=>map.removeLayer(x.layer));
+  polygonDeleteLayers=[];polygonDeleteSelected=null;
   status.classList.add('fade');
 }
 function beginAnotherPolygon(){
-  closePolygonToolMenu();stopPolygonDeleteMode();
-  activeTool='polygon';clearDraft();clearRuler();beginCrosshairPolygon();renderTools();msg('追加するポリゴンを描いてください',2200)
+  closePolygonToolMenu();clearPolygonDeleteMode();
+  activeTool='polygon';clearDraft();clearRuler();beginCrosshairPolygon();renderTools();hist();
+  msg('追加するポリゴンを描いてください',2200);
+}
+function showPolygonDeleteConfirm(item){
+  clearPolygonDeleteAction();polygonDeleteSelected=item;
+  polygonDeleteLayers.forEach(x=>x.layer.setStyle({color:x===item?'#d6453d':'#bf6b66',weight:x===item?6:4,fillColor:'#d6453d',fillOpacity:x===item?.18:.08}));
+  const wrap=document.createElement('div'),del=document.createElement('button'),back=document.createElement('button');
+  Object.assign(wrap.style,{position:'fixed',left:'50%',transform:'translateX(-50%)',bottom:'calc(132px + env(safe-area-inset-bottom))',zIndex:'1700',width:'min(360px,90vw)',padding:'9px',borderRadius:'16px',background:'rgba(48,40,29,.97)',boxShadow:'0 8px 24px rgba(0,0,0,.3)',display:'grid',gridTemplateColumns:'1fr auto',gap:'8px'});
+  del.type='button';del.textContent='このポリゴン削除します';Object.assign(del.style,{height:'50px',border:'2px solid #c88179',borderRadius:'13px',background:'#fff0ee',color:'#8c2f28',fontWeight:'950',fontSize:'14px'});
+  back.type='button';back.textContent='戻る';Object.assign(back.style,{minWidth:'78px',height:'50px',border:'2px solid #8a6b31',borderRadius:'13px',background:'#fffdf7',color:'#37270c',fontWeight:'950',fontSize:'14px'});
+  wrap.append(del,back);document.body.appendChild(wrap);polygonDeleteAction=wrap;
+  del.onclick=()=>{item.p.deleted=true;clearPolygonDeleteMode();drawAll();renderLayerPanel();snapshot();msg('ポリゴンを削除しました')};
+  back.onclick=()=>{clearPolygonDeleteAction();polygonDeleteSelected=null;polygonDeleteLayers.forEach(x=>x.layer.setStyle({color:'#d6453d',weight:4,fillColor:'#d6453d',fillOpacity:.10}));msg('削除するポリゴンを選択',0)};
 }
 function beginPolygonDeleteMode(){
-  closePolygonToolMenu();stopPolygonDeleteMode();closeMenus();
+  closePolygonToolMenu();clearPolygonDeleteMode();closeMenus();
   const list=polygons.filter(p=>!p.deleted);if(!list.length){msg('削除できるポリゴンはありません');return}
-  msg('削除するポリゴンを地図上でタップしてください',0);
   list.forEach(p=>{
-    const overlay=L.polygon(p.points,{pane:'polygon',color:'#d84f43',weight:5,fillColor:'#e86c61',fillOpacity:.14,interactive:true}).addTo(map);
-    overlay.on('click',e=>{
-      L.DomEvent.stopPropagation(e);
-      if(!confirm('このポリゴンを削除しますか？'))return;
-      p.deleted=true;stopPolygonDeleteMode();drawAll();renderLayerPanel();snapshot();msg('ポリゴンを削除しました');
-    });
-    polygonDeleteOverlays.push(overlay);
+    const layer=L.polygon(p.points,{pane:'polygon',color:'#d6453d',weight:4,fillColor:'#d6453d',fillOpacity:.10,interactive:true}).addTo(map);
+    const item={p,layer};layer.on('click',e=>{L.DomEvent.stopPropagation(e);showPolygonDeleteConfirm(item)});polygonDeleteLayers.push(item);
   });
-  const cancel=document.createElement('button');cancel.type='button';cancel.textContent='削除をキャンセル';
-  Object.assign(cancel.style,{position:'fixed',left:'50%',transform:'translateX(-50%)',bottom:'calc(132px + env(safe-area-inset-bottom))',zIndex:'1650',minWidth:'180px',height:'48px',padding:'0 18px',border:'2px solid #8a6b31',borderRadius:'14px',background:'#fffdf7',color:'#37270c',fontWeight:'950',fontSize:'14px',boxShadow:'0 6px 18px rgba(0,0,0,.28)'});
-  cancel.onclick=()=>{stopPolygonDeleteMode();msg('削除をキャンセルしました')};document.body.appendChild(cancel);polygonDeleteCancel=cancel;
+  msg('削除するポリゴンを選択',0);
 }
 function openPolygonChoice(){
-  stopPolygonDeleteMode();closeMenus();closePolygonToolMenu();
+  closeMenus();closePolygonToolMenu();clearPolygonDeleteMode();
   const count=polygons.filter(p=>!p.deleted).length;
   if(!count){beginAnotherPolygon();return}
   const wrap=document.createElement('div'),title=document.createElement('div'),add=document.createElement('button'),del=document.createElement('button'),close=document.createElement('button');
@@ -65,6 +71,15 @@ function openPolygonChoice(){
 
   html=html.replace(selectAnchor,helpers+selectAnchor);
   html=html.replace(bindOld,"toolMenu.querySelectorAll('button').forEach(b=>b.onclick=()=>b.dataset.tool==='polygon'?openPolygonChoice():selectTool(b.dataset.tool));");
+
+  html=html.replace("let polyDraft=[],polyLine=null,polyFill=null,polyNodes=[],polyAction=null,polyClose=null,polyCrosshair=null,polyClosing=false;","let polyDraft=[],polyRedoDraft=[],polyLine=null,polyFill=null,polyNodes=[],polyAction=null,polyClose=null,polyCrosshair=null,polyClosing=false;");
+  html=html.replace("function hist(){$('undo').disabled=!undoStack.length;$('redo').disabled=!redoStack.length}","function hist(){const poly=activeTool==='polygon';$('undo').disabled=poly?!polyDraft.length:!undoStack.length;$('redo').disabled=poly?!polyRedoDraft.length:!redoStack.length}");
+  html=html.replace("function addPolygonPoint(){const c=map.getCenter(),ll=[c.lat,c.lng],last=polyDraft.at(-1);","function addPolygonPoint(){const c=map.getCenter(),ll=[c.lat,c.lng],last=polyDraft.at(-1);");
+  html=html.replace("polyDraft.push(ll);updatePolyPreview();msg(polyDraft.length===1?'始点を設定しました。地図を動かして次の点へ':'点を追加しました',1100)","polyRedoDraft=[];polyDraft.push(ll);updatePolyPreview();hist();msg(polyDraft.length===1?'始点を設定しました。地図を動かして次の点へ':'点を追加しました',1100)");
+  html=html.replace("function beginCrosshairPolygon(){clearPolyDraft();ensurePolyCrosshair();ensurePolyAction();map.on('move',updatePolyPreview);updatePolyPreview();msg('十字を合わせて「点を打つ」を押してください',2200)}","function beginCrosshairPolygon(){clearPolyDraft();polyRedoDraft=[];ensurePolyCrosshair();ensurePolyAction();map.on('move',updatePolyPreview);updatePolyPreview();hist();msg('十字を合わせて「点を打つ」を押してください',2200)}");
+  html=html.replace("function byId(id){return records.find(r=>r.id===id)}function undo(){if(activeTool==='polygon'){if(polyDraft.length){polyDraft.pop();updatePolyPreview();msg(polyDraft.length?`ポリゴン：${polyDraft.length}点まで戻りました`:'始点の前まで戻りました',1000)}else msg('これ以上戻れません',1000);return}","function byId(id){return records.find(r=>r.id===id)}function undo(){if(activeTool==='polygon'){if(polyDraft.length){polyRedoDraft.push(polyDraft.pop());updatePolyPreview();hist();msg(polyDraft.length?`ポリゴン：${polyDraft.length}点まで戻りました`:'始点の前まで戻りました',1000)}else msg('これ以上戻れません',1000);return}");
+  html=html.replace("function redo(){const a=redoStack.pop();if(!a)return;","function redo(){if(activeTool==='polygon'){if(polyRedoDraft.length){polyDraft.push(polyRedoDraft.pop());updatePolyPreview();hist();msg('ポリゴンを1点やり直しました',1000)}else msg('これ以上やり直せません',1000);return}const a=redoStack.pop();if(!a)return;");
+  html=html.replace("function renderTools(){toolMenu.querySelectorAll('button').forEach(b=>b.classList.toggle('active',b.dataset.tool===activeTool))}","function renderTools(){toolMenu.querySelectorAll('button').forEach(b=>b.classList.toggle('active',b.dataset.tool===activeTool));hist()}");
 
   document.open();document.write(html);document.close();
 })().catch(()=>{document.body.textContent='レビュー画面の読み込みに失敗しました。';});
