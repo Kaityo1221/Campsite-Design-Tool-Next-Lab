@@ -9,9 +9,10 @@
 <body>
 <script>
 (async()=>{
+  const CACHE_VERSION='20260822-01';
   const [runtimeRes,patchRes]=await Promise.all([
-    fetch('./runtime-vnext.html',{cache:'no-store'}),
-    fetch('./creative-patches-v2.js',{cache:'no-store'})
+    fetch('./runtime-vnext.html?v='+CACHE_VERSION,{cache:'no-store'}),
+    fetch('./creative-patches-v2.js?v='+CACHE_VERSION,{cache:'no-store'})
   ]);
   if(!runtimeRes.ok||!patchRes.ok){document.body.textContent='Creative Modeの読み込みに失敗しました。';return;}
   let src=await runtimeRes.text();
