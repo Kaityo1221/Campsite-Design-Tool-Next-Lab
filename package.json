@@ -1,0 +1,12 @@
+{
+  "name": "campsite-design-tool-next-lab",
+  "private": true,
+  "scripts": {
+    "test:webkit": "playwright test --project=webkit"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0",
+    "jszip": "^3.10.1",
+    "leaflet": "^1.9.4"
+  }
+}
