@@ -9,18 +9,20 @@
 <body>
 <script>
 (async()=>{
-  const CACHE_VERSION='20260822-07';
-  const [runtimeRes,patchRes,patchV3Res,patchV4Res]=await Promise.all([
+  const CACHE_VERSION='20260823-01';
+  const [runtimeRes,patchRes,patchV3Res,patchV4Res,patchV5Res]=await Promise.all([
     fetch('./runtime-vnext.html?v='+CACHE_VERSION,{cache:'no-store'}),
     fetch('./creative-patches-v2.js?v='+CACHE_VERSION,{cache:'no-store'}),
     fetch('./creative-patches-v3.js?v='+CACHE_VERSION,{cache:'no-store'}),
-    fetch('./creative-patches-v4.js?v='+CACHE_VERSION,{cache:'no-store'})
+    fetch('./creative-patches-v4.js?v='+CACHE_VERSION,{cache:'no-store'}),
+    fetch('./creative-patches-v5-apac.js?v='+CACHE_VERSION,{cache:'no-store'})
   ]);
-  if(!runtimeRes.ok||!patchRes.ok||!patchV3Res.ok||!patchV4Res.ok){document.body.textContent='Creative Modeの読み込みに失敗しました。';return;}
+  if(!runtimeRes.ok||!patchRes.ok||!patchV3Res.ok||!patchV4Res.ok||!patchV5Res.ok){document.body.textContent='Creative Modeの読み込みに失敗しました。';return;}
   let src=await runtimeRes.text();
   Function(await patchRes.text())();
   Function(await patchV3Res.text())();
   Function(await patchV4Res.text())();
+  Function(await patchV5Res.text())();
   if(typeof window.applyCreativePatches!=='function'){document.body.textContent='Creative Modeの拡張機能を読み込めませんでした。';return;}
   src=window.applyCreativePatches(src);
   document.open();document.write(src);document.close();
