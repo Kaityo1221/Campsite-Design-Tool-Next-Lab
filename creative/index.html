@@ -9,7 +9,7 @@
 <body>
 <script>
 (async()=>{
-  const CACHE_VERSION='20260822-07';
+  const CACHE_VERSION='20260823-01';
   const [runtimeRes,patchRes,patchV3Res,patchV4Res]=await Promise.all([
     fetch('./runtime-vnext.html?v='+CACHE_VERSION,{cache:'no-store'}),
     fetch('./creative-patches-v2.js?v='+CACHE_VERSION,{cache:'no-store'}),
@@ -23,6 +23,15 @@
   Function(await patchV4Res.text())();
   if(typeof window.applyCreativePatches!=='function'){document.body.textContent='Creative Modeの拡張機能を読み込めませんでした。';return;}
   src=window.applyCreativePatches(src);
+
+  // 旧マニュアル互換：My Mapsへnearby-wayspots CSVを個別投入したKMZでも、
+  // ExtendedDataのgameEntity（POKESTOP / GYM / POWERSPOT）を優先して正式レイヤーへ振り分ける。
+  const runtimeWriteNeedle='document.open();document.write(html);document.close();';
+  const legacyLayerPatch=`const legacyInferNeedle="function inferLayer(pm,f,n){const explicit=explicitLayer(pm);if(explicit)return explicit;const exact=layerByLabel.get(String(f||'').trim());if(exact)return exact;const style=(child(pm,'styleUrl')||'').replace(/^#/,'');if(style.startsWith('creative-')){const styled=style.slice('creative-'.length);if(layerKeys.has(styled))return styled}const h=(f+' '+n).toLowerCase(),fresh=/追加|新規|候補|add|new|planned/.test(h);if(/gym|ジム/.test(h))return fresh?'new-gym':'existing-gym';if(/power|パワー/.test(h))return fresh?'new-power':'existing-power';return fresh?'new-pokestop':'existing-pokestop'}";
+const legacyInferReplacement="function legacyGameEntity(pm){for(const data of pm.getElementsByTagNameNS('*','Data')){const key=String(data.getAttribute('name')||'').replace(/^\\uFEFF/,'').trim().toLowerCase();if(key!=='gameentity')continue;const value=[...data.children].find(x=>x.localName==='value')?.textContent?.trim()||data.textContent?.trim()||'';return String(value).trim().toUpperCase()}return''}function inferLayer(pm,f,n){const explicit=explicitLayer(pm);if(explicit)return explicit;const exact=layerByLabel.get(String(f||'').trim());if(exact)return exact;const style=(child(pm,'styleUrl')||'').replace(/^#/,'');if(style.startsWith('creative-')){const styled=style.slice('creative-'.length);if(layerKeys.has(styled))return styled}const h=(f+' '+n).toLowerCase(),fresh=/追加|新規|候補|add|new|planned/.test(h),entity=legacyGameEntity(pm);if(entity==='GYM')return fresh?'new-gym':'existing-gym';if(entity==='POWERSPOT'||entity==='POWER_SPOT'||entity==='POWER SPOT')return fresh?'new-power':'existing-power';if(entity==='POKESTOP'||entity==='POKÉSTOP'||entity==='POKE_STOP')return fresh?'new-pokestop':'existing-pokestop';if(/gym|ジム/.test(h))return fresh?'new-gym':'existing-gym';if(/power|パワー/.test(h))return fresh?'new-power':'existing-power';return fresh?'new-pokestop':'existing-pokestop'}";
+if(html.includes(legacyInferNeedle))html=html.replace(legacyInferNeedle,legacyInferReplacement);`;
+  if(src.includes(runtimeWriteNeedle))src=src.replace(runtimeWriteNeedle,legacyLayerPatch+runtimeWriteNeedle);
+
   document.open();document.write(src);document.close();
 })().catch(()=>{document.body.textContent='Creative Modeの読み込みに失敗しました。';});
 </script>
