@@ -9,7 +9,7 @@
 <body>
 <script>
 (async()=>{
-  const CACHE_VERSION='20260824-02';
+  const CACHE_VERSION='20260824-03';
   const [runtimeRes,patchRes,patchV3Res,patchV4Res,trackingRes,backfillRes]=await Promise.all([
     fetch('./runtime-vnext.html?v='+CACHE_VERSION,{cache:'no-store'}),
     fetch('./creative-patches-v2.js?v='+CACHE_VERSION,{cache:'no-store'}),
@@ -20,6 +20,15 @@
   ]);
   if(!runtimeRes.ok||!patchRes.ok||!patchV3Res.ok||!patchV4Res.ok||!trackingRes.ok||!backfillRes.ok){document.body.textContent='Creative Modeの読み込みに失敗しました。';return;}
   let src=await runtimeRes.text();
+
+  // runtime-vnext が base-v7.html を読み込んだ直後に、削除済み旧main参照を固定コミットへ差し替える。
+  const oldBg='https://raw.githubusercontent.com/Kaityo1221/campsite-design-tool-adv-lab/main/creative/runtime/assets/creative-mode-opening.png';
+  const fixedBg='https://raw.githubusercontent.com/Kaityo1221/campsite-design-tool-adv-lab/1c27ca3ef14f423688f755d350ecc602bee1c573/creative/runtime/assets/creative-mode-opening.png';
+  const baseLoadNeedle='let html=await res.text();';
+  if(src.includes(baseLoadNeedle)){
+    src=src.replace(baseLoadNeedle,baseLoadNeedle+`\n  html=html.replace(${JSON.stringify(oldBg)},${JSON.stringify(fixedBg)});`);
+  }
+
   Function(await patchRes.text())();
   Function(await patchV3Res.text())();
   Function(await patchV4Res.text())();
@@ -29,12 +38,6 @@
   src=window.applyCreativePatches(src);
   src=window.applyCreativeTrackingPatch(src);
   src=window.applyCreativeBackfillUpload(src);
-
-  // 旧Adv Lab側のCreative Modeコピー削除後も、起動画面背景を固定コミットから維持する。
-  src=src.replace(
-    'https://raw.githubusercontent.com/Kaityo1221/campsite-design-tool-adv-lab/main/creative/runtime/assets/creative-mode-opening.png',
-    'https://raw.githubusercontent.com/Kaityo1221/campsite-design-tool-adv-lab/1c27ca3ef14f423688f755d350ecc602bee1c573/creative/runtime/assets/creative-mode-opening.png'
-  );
 
   // 旧マニュアル互換：My Mapsへnearby-wayspots CSVを個別投入したKMZでも、
   // ExtendedDataのgameEntity（POKESTOP / GYM / POWERSPOT）を優先して正式レイヤーへ振り分ける。
