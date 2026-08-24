@@ -9,7 +9,7 @@
 const CREATIVE_TRACK_URL='${TRACK_URL}';
 const CREATIVE_TRACK_KEY='${TRACK_KEY}';
 function creativeDeviceId(){try{const k='campsite-anonymous-device-id';let v=localStorage.getItem(k);if(!v){v=crypto.randomUUID?.()||('dev-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2));localStorage.setItem(k,v)}return v}catch{return null}}
-function creativeParkName(){return String(sourceName||'campsite').replace(/_creative$/i,'').replace(/\\.(kmz|kml|csv)$/i,'').trim()||'campsite'}
+function creativeParkName(){return String(sourceName||'campsite').replace(/\\.(kmz|kml|csv)$/i,'').replace(/(?:_creative)+$/i,'').trim()||'campsite'}
 function creativeCenter(){const activePolys=(polygons||[]).filter(p=>p&&!p.deleted&&Array.isArray(p.points)&&p.points.length);if(activePolys.length){const pts=activePolys.flatMap(p=>p.points).filter(x=>Array.isArray(x)&&Number.isFinite(Number(x[0]))&&Number.isFinite(Number(x[1])));if(pts.length)return{lat:pts.reduce((s,x)=>s+Number(x[0]),0)/pts.length,lng:pts.reduce((s,x)=>s+Number(x[1]),0)/pts.length,source:'polygon'}}const pts=(records||[]).filter(r=>r&&!r.deleted&&Array.isArray(r.latlng)&&Number.isFinite(Number(r.latlng[0]))&&Number.isFinite(Number(r.latlng[1])));if(pts.length)return{lat:pts.reduce((s,r)=>s+Number(r.latlng[0]),0)/pts.length,lng:pts.reduce((s,r)=>s+Number(r.latlng[1]),0)/pts.length,source:'poi_centroid'};return{lat:null,lng:null,source:null}}
 function creativeProjectKey(park,center){const n=String(park||'campsite').normalize('NFKC').toLowerCase().replace(/\\s+/g,' ').trim();const lat=Number.isFinite(center.lat)?center.lat.toFixed(3):'na',lng=Number.isFinite(center.lng)?center.lng.toFixed(3):'na';return n+'|'+lat+','+lng}
 function creativeCanonicalDesign(){const poi=(records||[]).filter(r=>r&&!r.deleted&&Array.isArray(r.latlng)).map(r=>[String(r.layer||''),Number(r.latlng[0]).toFixed(6),Number(r.latlng[1]).toFixed(6)].join('|')).sort();const poly=(polygons||[]).filter(p=>p&&!p.deleted&&Array.isArray(p.points)&&p.points.length).map(p=>p.points.map(x=>Number(x[0]).toFixed(6)+','+Number(x[1]).toFixed(6)).sort().join('|')).sort();return JSON.stringify({poi,poly})}
@@ -20,7 +20,8 @@ async function trackCreative(eventType){try{const center=creativeCenter(),park=c
   const runtimePatch=[
     'const creativeTrackingHelpers='+JSON.stringify(helpers)+';',
     "if(html.includes('function beginEditor(){'))html=html.replace('function beginEditor(){',creativeTrackingHelpers+'function beginEditor(){void trackCreative(\"creative_mode_open\");');",
-    "if(html.includes('async function exportKmz(){'))html=html.replace('async function exportKmz(){','async function exportKmz(){void trackCreative(\"creative_mode_save\");');"
+    "if(html.includes('async function exportKmz(){'))html=html.replace('async function exportKmz(){','async function exportKmz(){void trackCreative(\"creative_mode_save\");');",
+    "if(html.includes(\"filename=sourceName+'_creative.kmz'\"))html=html.replace(\"filename=sourceName+'_creative.kmz'\",\"filename=(String(sourceName||'campsite').replace(/(?:_creative)+$/i,'')||'campsite')+'_creative.kmz'\");"
   ].join('\n');
 
   window.applyCreativeTrackingPatch=src=>{
