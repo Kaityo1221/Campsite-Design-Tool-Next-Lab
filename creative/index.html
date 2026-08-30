@@ -45,7 +45,13 @@
   const legacyLayerPatch=`const legacyInferNeedle="function inferLayer(pm,f,n){const explicit=explicitLayer(pm);if(explicit)return explicit;const exact=layerByLabel.get(String(f||'').trim());if(exact)return exact;const style=(child(pm,'styleUrl')||'').replace(/^#/,'');if(style.startsWith('creative-')){const styled=style.slice('creative-'.length);if(layerKeys.has(styled))return styled}const h=(f+' '+n).toLowerCase(),fresh=/追加|新規|候補|add|new|planned/.test(h);if(/gym|ジム/.test(h))return fresh?'new-gym':'existing-gym';if(/power|パワー/.test(h))return fresh?'new-power':'existing-power';return fresh?'new-pokestop':'existing-pokestop'}";
 const legacyInferReplacement="function legacyGameEntity(pm){for(const data of pm.getElementsByTagNameNS('*','Data')){const key=String(data.getAttribute('name')||'').replace(/^\\uFEFF/,'').trim().toLowerCase();if(key!=='gameentity')continue;const value=[...data.children].find(x=>x.localName==='value')?.textContent?.trim()||data.textContent?.trim()||'';return String(value).trim().toUpperCase()}return''}function inferLayer(pm,f,n){const explicit=explicitLayer(pm);if(explicit)return explicit;const exact=layerByLabel.get(String(f||'').trim());if(exact)return exact;const style=(child(pm,'styleUrl')||'').replace(/^#/,'');if(style.startsWith('creative-')){const styled=style.slice('creative-'.length);if(layerKeys.has(styled))return styled}const h=(f+' '+n).toLowerCase(),fresh=/追加|新規|候補|add|new|planned/.test(h),entity=legacyGameEntity(pm);if(entity==='GYM')return fresh?'new-gym':'existing-gym';if(entity==='POWERSPOT'||entity==='POWER_SPOT'||entity==='POWER SPOT')return fresh?'new-power':'existing-power';if(entity==='POKESTOP'||entity==='POKÉSTOP'||entity==='POKE_STOP')return fresh?'new-pokestop':'existing-pokestop';if(/gym|ジム/.test(h))return fresh?'new-gym':'existing-gym';if(/power|パワー/.test(h))return fresh?'new-power':'existing-power';return fresh?'new-pokestop':'existing-pokestop'}";
 if(html.includes(legacyInferNeedle))html=html.replace(legacyInferNeedle,legacyInferReplacement);`;
-  if(src.includes(runtimeWriteNeedle))src=src.replace(runtimeWriteNeedle,legacyLayerPatch+runtimeWriteNeedle);
+
+  // おまけ：作成・編集をしない現地没入モードへの小さな入口。
+  const immersiveEntryPatch=`const immersiveNeedle='<div class="entry-note">編集内容は自動保存されます。</div>';
+const immersiveButton='<button type="button" onclick="location.href=\'./field-immersive-dev.html\'" style="min-height:38px;margin-top:2px;border:1px solid rgba(255,239,200,.28);border-radius:12px;background:rgba(36,31,24,.64);color:#ffe19b;font-size:11px;font-weight:950;letter-spacing:.06em">🧭 おまけ</button>';
+if(html.includes(immersiveNeedle))html=html.replace(immersiveNeedle,immersiveNeedle+immersiveButton);`;
+
+  if(src.includes(runtimeWriteNeedle))src=src.replace(runtimeWriteNeedle,legacyLayerPatch+immersiveEntryPatch+runtimeWriteNeedle);
 
   document.open();document.write(src);document.close();
 })().catch(()=>{document.body.textContent='Creative Modeの読み込みに失敗しました。';});
