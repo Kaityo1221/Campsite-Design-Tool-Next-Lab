@@ -9,7 +9,7 @@
 <body>
 <script>
 (async()=>{
-  const CACHE_VERSION='20260824-04';
+  const CACHE_VERSION='20260905-01';
   const [runtimeRes,patchRes,patchV3Res,patchV4Res,trackingRes,backfillRes]=await Promise.all([
     fetch('./runtime-vnext.html?v='+CACHE_VERSION,{cache:'no-store'}),
     fetch('./creative-patches-v2.js?v='+CACHE_VERSION,{cache:'no-store'}),
