@@ -9,16 +9,17 @@
 <body>
 <script>
 (async()=>{
-  const CACHE_VERSION='20260905-01';
-  const [runtimeRes,patchRes,patchV3Res,patchV4Res,trackingRes,backfillRes]=await Promise.all([
+  const CACHE_VERSION='20260905-02';
+  const [runtimeRes,patchRes,patchV3Res,patchV4Res,patchV5Res,trackingRes,backfillRes]=await Promise.all([
     fetch('./runtime-vnext.html?v='+CACHE_VERSION,{cache:'no-store'}),
     fetch('./creative-patches-v2.js?v='+CACHE_VERSION,{cache:'no-store'}),
     fetch('./creative-patches-v3.js?v='+CACHE_VERSION,{cache:'no-store'}),
     fetch('./creative-patches-v4.js?v='+CACHE_VERSION,{cache:'no-store'}),
+    fetch('./creative-patches-v5-design-check.js?v='+CACHE_VERSION,{cache:'no-store'}),
     fetch('./creative-tracking-patch.js?v='+CACHE_VERSION,{cache:'no-store'}),
     fetch('./creative-backfill-upload.js?v='+CACHE_VERSION,{cache:'no-store'})
   ]);
-  if(!runtimeRes.ok||!patchRes.ok||!patchV3Res.ok||!patchV4Res.ok||!trackingRes.ok||!backfillRes.ok){document.body.textContent='Creative Modeの読み込みに失敗しました。';return;}
+  if(!runtimeRes.ok||!patchRes.ok||!patchV3Res.ok||!patchV4Res.ok||!patchV5Res.ok||!trackingRes.ok||!backfillRes.ok){document.body.textContent='Creative Modeの読み込みに失敗しました。';return;}
   let src=await runtimeRes.text();
 
   // runtime-vnext が base-v7.html を読み込んだ直後に、削除済み旧main参照を固定コミットへ差し替える。
@@ -32,6 +33,7 @@
   Function(await patchRes.text())();
   Function(await patchV3Res.text())();
   Function(await patchV4Res.text())();
+  Function(await patchV5Res.text())();
   Function(await trackingRes.text())();
   Function(await backfillRes.text())();
   if(typeof window.applyCreativePatches!=='function'||typeof window.applyCreativeTrackingPatch!=='function'||typeof window.applyCreativeBackfillUpload!=='function'){document.body.textContent='Creative Modeの拡張機能を読み込めませんでした。';return;}
