@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover,user-scalable=no">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>FIELD MODE | Next Lab</title>
+</head>
+<body>
+<script>
+(async()=>{
+  const VERSION='20260908-02';
+  const res=await fetch('./prototype.html?v='+VERSION,{cache:'no-store'});
+  if(!res.ok){document.body.textContent='FIELD MODEの読み込みに失敗しました。';return;}
+  let html=await res.text();
+  html=html.replace('body.discovered .explore-wrap{top:auto;bottom:calc(252px + env(safe-area-inset-bottom));width:min(70vw,290px)}','body.discovered .explore-wrap{top:auto;bottom:calc(348px + env(safe-area-inset-bottom));width:min(70vw,290px)}');
+  html=html.replace('body.discovered .explore-wrap{bottom:calc(242px + env(safe-area-inset-bottom))}','body.discovered .explore-wrap{bottom:calc(338px + env(safe-area-inset-bottom))}');
+  document.open();document.write(html);document.close();
+})().catch(()=>{document.body.textContent='FIELD MODEの読み込みに失敗しました。';});
+</script>
+</body>
+</html>
