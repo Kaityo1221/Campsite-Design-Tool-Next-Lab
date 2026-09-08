@@ -9,7 +9,7 @@
 <body>
 <script>
 (async()=>{
-  const CACHE_VERSION='20260907-01';
+  const CACHE_VERSION='20260908-02';
   const [runtimeRes,patchRes,patchV3Res,patchV4Res,trackingRes,backfillRes]=await Promise.all([
     fetch('./runtime-vnext.html?v='+CACHE_VERSION,{cache:'no-store'}),
     fetch('./creative-patches-v2.js?v='+CACHE_VERSION,{cache:'no-store'}),
@@ -41,6 +41,10 @@
   src=window.applyCreativePatches(src);
   src=window.applyCreativeTrackingPatch(src);
   src=window.applyCreativeBackfillUpload(src);
+
+  // iPhoneではKMZがZIP系MIMEとして扱われ、accept指定があると選択不能になることがある。
+  // 選択後のCreative Mode側判定は維持し、ファイルピッカー入口のaccept制限だけ外す。
+  src=src.replace(/multiple accept="[^"]*"/g,'multiple');
 
   // 旧マニュアル互換：My Mapsへnearby-wayspots CSVを個別投入したKMZでも、
   // ExtendedDataのgameEntity（POKESTOP / GYM / POWERSPOT）を優先して正式レイヤーへ振り分ける。
