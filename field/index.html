@@ -9,21 +9,18 @@
 <body>
 <script>
 (async()=>{
-  const VERSION='20260908-04';
+  const VERSION='20260908-06';
   const res=await fetch('./prototype.html?v='+VERSION,{cache:'no-store'});
   if(!res.ok){document.body.textContent='FIELD MODEの読み込みに失敗しました。';return;}
   let html=await res.text();
+
   html=html.replace('body.discovered .explore-wrap{top:auto;bottom:calc(252px + env(safe-area-inset-bottom));width:min(70vw,290px)}','body.discovered .explore-wrap{top:auto;bottom:calc(348px + env(safe-area-inset-bottom));width:min(70vw,290px)}');
   html=html.replace('body.discovered .explore-wrap{bottom:calc(242px + env(safe-area-inset-bottom))}','body.discovered .explore-wrap{bottom:calc(338px + env(safe-area-inset-bottom))}');
 
-  // 優先度ランクと候補番号を統一する。A=1、B=2、C=3。
-  // 距離順とは独立し、最寄り公園がBなら「候補公園2 / B」として中央に表示する。
-  html=html.replace("{name:'候補公園 1',distance:280,rank:'B'","{name:'候補公園 2',distance:280,rank:'B'");
-  html=html.replace("{name:'候補公園 2',distance:620,rank:'A'","{name:'候補公園 1',distance:620,rank:'A'");
-  html=html.replace('<div id="detailName" class="sheet-name">候補公園 1</div>','<div id="detailName" class="sheet-name">候補公園 2</div>');
-  html=html.replace('<strong id="focusName">候補公園 1</strong>','<strong id="focusName">候補公園 2</strong>');
+  // 候補番号は距離順、A/B/Cは調査優先度。
+  // prototype の 1=280m/B, 2=620m/A, 3=940m/C をそのまま使用する。
 
-  // 候補サークルは位置と内容を固定し、選択状態だけ色で切り替える。
+  // サークルの位置・中身は固定。選択は色だけで示す。
   html=html.replace(
     '.candidate.center{flex-basis:118px;width:118px;height:118px;background:rgba(249,255,245,.97);border:3px solid #4a9b70;box-shadow:0 14px 34px rgba(28,90,63,.28);transform:translateY(-2px)}',
     '.candidate.center{flex-basis:118px;width:118px;height:118px;background:rgba(255,255,250,.94);border:2px solid rgba(255,255,255,.92);box-shadow:0 9px 25px rgba(28,62,50,.20);transform:translateY(-2px)}.candidate.selected{background:rgba(239,250,242,.98);border-color:#2d805f;box-shadow:0 12px 30px rgba(28,90,63,.26)}'
@@ -33,16 +30,12 @@
     '.candidate.center .rank{width:32px;height:32px;font-size:18px;background:#e5efe8;color:#265e49}.candidate.selected .rank{background:#2d805f;color:#fff}'
   );
 
-  const oldRender=`function renderCandidates(){\n      const order=[(selected+2)%3,selected,(selected+1)%3];\n      candidateRow.innerHTML='';\n      order.forEach((idx,pos)=>{\n        const p=parks[idx];\n        const button=document.createElement('button');\n        button.type='button';\n        button.className='candidate'+(pos===1?' center':'');\n        button.setAttribute('aria-label',\`${p.name} ${p.distance}m 優先度${p.rank}\`);\n        button.innerHTML=\`<span class=\"park-name\">${p.name}</span><span class=\"distance\">${p.distance}m</span><span class=\"rank\">${p.rank}</span>\`;\n        button.addEventListener('click',()=>selectPark(idx,true));\n        candidateRow.appendChild(button);\n      });`;
-  const newRender=`function renderCandidates(){\n      const order=[2,0,1];\n      candidateRow.innerHTML='';\n      order.forEach((idx,pos)=>{\n        const p=parks[idx];\n        const button=document.createElement('button');\n        button.type='button';\n        button.className='candidate'+(pos===1?' center':'')+(idx===selected?' selected':'');\n        button.setAttribute('aria-label',\`${p.name} ${p.distance}m 優先度${p.rank}\`);\n        button.innerHTML=\`<span class=\"park-name\">${p.name}</span><span class=\"distance\">${p.distance}m</span><span class=\"rank\">${p.rank}</span>\`;\n        button.addEventListener('click',()=>selectPark(idx,true));\n        candidateRow.appendChild(button);\n      });`;
-  if(html.includes(oldRender))html=html.replace(oldRender,newRender);
-
-  const oldSwipe=`const dx=e.changedTouches[0].clientX-touchStartX;\n      if(Math.abs(dx)<35)return;\n      selectPark(selected+(dx<0?1:-1),true);`;
-  const newSwipe=`const dx=e.changedTouches[0].clientX-touchStartX;\n      if(Math.abs(dx)<35)return;\n      const order=[2,0,1];\n      const pos=order.indexOf(selected);\n      const next=(pos+(dx<0?1:-1)+order.length)%order.length;\n      selectPark(order[next],true);`;
-  if(html.includes(oldSwipe))html=html.replace(oldSwipe,newSwipe);
+  html=html.replace('const order=[(selected+2)%3,selected,(selected+1)%3];','const order=[2,0,1];');
+  html=html.replace("button.className='candidate'+(pos===1?' center':'');","button.className='candidate'+(pos===1?' center':'')+(idx===selected?' selected':'');");
+  html=html.replace('selectPark(selected+(dx<0?1:-1),true);','const order=[2,0,1];const pos=order.indexOf(selected);const next=(pos+(dx<0?1:-1)+order.length)%order.length;selectPark(order[next],true);');
 
   document.open();document.write(html);document.close();
-})().catch(()=>{document.body.textContent='FIELD MODEの読み込みに失敗しました。';});
+})().catch(err=>{console.error(err);document.body.textContent='FIELD MODEの読み込みに失敗しました。';});
 </script>
 </body>
 </html>
