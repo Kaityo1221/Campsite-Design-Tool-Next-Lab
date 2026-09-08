@@ -9,12 +9,20 @@
 <body>
 <script>
 (async()=>{
-  const VERSION='20260908-02';
+  const VERSION='20260908-03';
   const res=await fetch('./prototype.html?v='+VERSION,{cache:'no-store'});
   if(!res.ok){document.body.textContent='FIELD MODEの読み込みに失敗しました。';return;}
   let html=await res.text();
   html=html.replace('body.discovered .explore-wrap{top:auto;bottom:calc(252px + env(safe-area-inset-bottom));width:min(70vw,290px)}','body.discovered .explore-wrap{top:auto;bottom:calc(348px + env(safe-area-inset-bottom));width:min(70vw,290px)}');
   html=html.replace('body.discovered .explore-wrap{bottom:calc(242px + env(safe-area-inset-bottom))}','body.discovered .explore-wrap{bottom:calc(338px + env(safe-area-inset-bottom))}');
+
+  // 優先度ランクと候補番号を統一する。A=1、B=2、C=3。
+  // 距離順とは独立し、最寄り公園がBなら「候補公園2 / B」として中央に表示する。
+  html=html.replace("{name:'候補公園 1',distance:280,rank:'B'","{name:'候補公園 2',distance:280,rank:'B'");
+  html=html.replace("{name:'候補公園 2',distance:620,rank:'A'","{name:'候補公園 1',distance:620,rank:'A'");
+  html=html.replace('<div id="detailName" class="sheet-name">候補公園 1</div>','<div id="detailName" class="sheet-name">候補公園 2</div>');
+  html=html.replace('<strong id="focusName">候補公園 1</strong>','<strong id="focusName">候補公園 2</strong>');
+
   document.open();document.write(html);document.close();
 })().catch(()=>{document.body.textContent='FIELD MODEの読み込みに失敗しました。';});
 </script>
