@@ -9,7 +9,7 @@
 <body>
 <script>
 (async()=>{
-  const VERSION='20260908-07';
+  const VERSION='20260909-01';
   const res=await fetch('./prototype.html?v='+VERSION,{cache:'no-store'});
   if(!res.ok){document.body.textContent='FIELD MODEの読み込みに失敗しました。';return;}
   let html=await res.text();
@@ -35,10 +35,11 @@
   html=html.replace('selectPark(selected+(dx<0?1:-1),true);','const order=[2,0,1];const pos=order.indexOf(selected);const next=(pos+(dx<0?1:-1)+order.length)%order.length;selectPark(order[next],true);');
 
   // 地図ライセンスは消さず、MapLibre標準のコンパクト表示にする。
+  // 候補サークルと干渉しないよう、ズームボタンと同じ右上コントロール列に置く。
   html=html.replace('attributionControl:true','attributionControl:false');
   html=html.replace(
     "map.addControl(new maplibregl.NavigationControl({showCompass:false}),'top-right');",
-    "map.addControl(new maplibregl.NavigationControl({showCompass:false}),'top-right');map.addControl(new maplibregl.AttributionControl({compact:true}),'bottom-right');"
+    "map.addControl(new maplibregl.NavigationControl({showCompass:false}),'top-right');map.addControl(new maplibregl.AttributionControl({compact:true}),'top-right');"
   );
 
   document.open();document.write(html);document.close();
