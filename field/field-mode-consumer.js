@@ -7,6 +7,11 @@ import {
   reviewTargetsGeoJSON,
   focalPointGeoJSON,
 } from './field-mode-contract.mjs';
+import {
+  decodeFieldTransferToken,
+  transferTokenFromLocation,
+  validateFieldTransferEnvelope,
+} from './field-mode-transport.mjs';
 
 const FACT_LABELS = {
   nearest_road_edge_m: '最寄り道路縁',
@@ -31,9 +36,30 @@ function queryFlag(name) {
   return value === '1' || value === 'true' || value === 'active';
 }
 
+function clearTransferFragment() {
+  if (!location.hash || !history.replaceState) return;
+  const hash = location.hash.replace(/^#/, '');
+  const params = new URLSearchParams(hash);
+  if (!params.has('fieldTransfer')) return;
+  params.delete('fieldTransfer');
+  const remaining = params.toString();
+  history.replaceState(null, '', `${location.pathname}${location.search}${remaining ? `#${remaining}` : ''}`);
+}
+
 async function readPayload() {
   if (window.__CAMPSITE_FIELD_MODE_PAYLOAD__ && typeof window.__CAMPSITE_FIELD_MODE_PAYLOAD__ === 'object') {
     return { payload: window.__CAMPSITE_FIELD_MODE_PAYLOAD__, source: 'window' };
+  }
+
+  const transferToken = transferTokenFromLocation();
+  if (transferToken) {
+    const envelope = decodeFieldTransferToken(transferToken);
+    const envelopeValidation = validateFieldTransferEnvelope(envelope);
+    if (!envelopeValidation.ok) {
+      throw new Error(`FIELD transfer rejected: ${envelopeValidation.errors.join(',')}`);
+    }
+    clearTransferFragment();
+    return { payload: envelope.payload, source: 'fragment', envelope };
   }
 
   const params = new URLSearchParams(location.search);
@@ -62,6 +88,13 @@ function persistPayload(payload) {
   }
 }
 
+function bindCurrentCandidate() {
+  const url = new URL(location.href);
+  url.searchParams.set('fieldBind', '1');
+  history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`);
+  location.reload();
+}
+
 function installStyles() {
   if (document.getElementById('field-mode-consumer-style')) return;
   const style = document.createElement('style');
@@ -72,6 +105,7 @@ function installStyles() {
     .field-ai-summary strong{display:block;margin-top:4px;font-size:13px;color:#173f32}
     .field-ai-summary .meta{margin-top:5px;font-size:10px;line-height:1.55;color:#5a7067}
     .field-ai-summary .warn{margin-top:7px;font-size:9px;line-height:1.5;color:#8a6531}
+    .field-ai-bind{width:100%;margin-top:9px;border:0;border-radius:12px;padding:10px 12px;background:#205e49;color:#fff;font-size:11px;font-weight:950;box-shadow:0 7px 16px rgba(24,86,63,.20)}
     .ai-offline.field-ai-connected{color:#1e6c50;border-color:rgba(31,114,86,.25);background:rgba(237,249,242,.92)}
     .field-ai-map-legend{position:fixed;z-index:29;right:12px;top:calc(112px + env(safe-area-inset-top));width:min(54vw,220px);padding:9px 10px;border-radius:14px;border:1px solid rgba(24,73,57,.16);background:rgba(255,255,250,.94);box-shadow:0 8px 22px rgba(27,57,47,.13);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);font-size:9px;line-height:1.5;color:#566d64}
     .field-ai-map-legend b{display:block;color:#1f7256;font-size:10px;margin-bottom:2px}
@@ -154,8 +188,13 @@ function renderBriefing(payload, bound) {
   if (!bound) {
     const warn = document.createElement('div');
     warn.className = 'warn';
-    warn.textContent = '候補公園とのsite bindingが未確定のため、Core factsは候補A/B/Cへ貼り付けていません。';
-    summary.appendChild(warn);
+    warn.textContent = '候補公園とのsite bindingが未確定です。内容を確認してから、この候補をHeadquarters案件として接続してください。';
+    const bindButton = document.createElement('button');
+    bindButton.type = 'button';
+    bindButton.className = 'field-ai-bind';
+    bindButton.textContent = 'この候補をHQ案件として接続';
+    bindButton.addEventListener('click', bindCurrentCandidate);
+    summary.append(warn, bindButton);
   }
 
   if (!bound) return;
