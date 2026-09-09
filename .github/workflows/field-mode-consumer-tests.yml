@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - "field/field-mode-contract.mjs"
+      - "field/field-mode-transport.mjs"
       - "field/field-mode-consumer.js"
       - "field/index.html"
       - "field/explore-shell.html"
@@ -13,6 +14,7 @@ on:
   pull_request:
     paths:
       - "field/field-mode-contract.mjs"
+      - "field/field-mode-transport.mjs"
       - "field/field-mode-consumer.js"
       - "field/index.html"
       - "field/explore-shell.html"
@@ -32,5 +34,5 @@ jobs:
         with:
           node-version: "24"
 
-      - name: Run FIELD MODE contract tests
-        run: node --test field/tests/field-mode-contract.test.mjs
+      - name: Run FIELD MODE contract and transport tests
+        run: node --test field/tests/*.test.mjs
