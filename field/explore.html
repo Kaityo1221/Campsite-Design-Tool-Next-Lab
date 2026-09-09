@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover,user-scalable=no">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>FIELD EXPLORATION | Next Lab</title>
+<link href="https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.css" rel="stylesheet">
+<script src="https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.js"></script>
+<style>
+:root{--ink:#17342c;--muted:#60756d;--green:#1f7256;--green-dark:#14563f;--panel:rgba(255,255,250,.94);--shadow:0 18px 50px rgba(25,54,44,.20)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP",sans-serif;background:#dfe9df;color:var(--ink)}
+button{font:inherit}
+#map{position:fixed;inset:0}
+.maplibregl-ctrl-top-right{top:calc(78px + env(safe-area-inset-top));right:8px}
+.maplibregl-ctrl-attrib{font-size:9px!important}
+.topbar{position:fixed;z-index:20;left:12px;right:12px;top:calc(10px + env(safe-area-inset-top));display:flex;align-items:flex-start;justify-content:space-between;gap:8px;pointer-events:none}
+.back,.status{pointer-events:auto;border:1px solid rgba(24,73,57,.14);background:rgba(255,255,250,.93);box-shadow:0 8px 22px rgba(27,57,47,.13);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.back{border-radius:999px;padding:10px 13px;color:var(--green-dark);font-size:12px;font-weight:950}
+.status{border-radius:999px;padding:9px 11px;font-size:10px;font-weight:900;color:#2f6c54;display:flex;align-items:center;gap:7px}
+.status-dot{width:8px;height:8px;border-radius:50%;background:#2f9b70;box-shadow:0 0 0 4px rgba(47,155,112,.16)}
+.title-card{position:fixed;z-index:18;left:12px;top:calc(64px + env(safe-area-inset-top));max-width:min(72vw,320px);padding:11px 13px;border-radius:18px;background:rgba(255,255,250,.92);border:1px solid rgba(24,73,57,.14);box-shadow:0 8px 22px rgba(27,57,47,.13);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.title-card small{display:block;font-size:9px;font-weight:950;letter-spacing:.12em;color:#698078}
+.title-card strong{display:block;margin-top:3px;font-size:18px;line-height:1.15}
+.title-meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}
+.pill{padding:5px 8px;border-radius:999px;background:#edf3ec;font-size:9px;font-weight:900;color:#476158}
+.legend{position:fixed;z-index:18;left:12px;bottom:calc(14px + env(safe-area-inset-bottom));padding:10px 11px;border-radius:16px;background:rgba(255,255,250,.92);border:1px solid rgba(24,73,57,.14);box-shadow:0 8px 22px rgba(27,57,47,.13);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);font-size:9px;font-weight:900;color:#536960;line-height:1.7}
+.legend b{color:var(--green-dark)}
+.poi{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;border:3px solid #fff;box-shadow:0 5px 14px rgba(20,64,51,.25);font-size:9px;font-weight:1000;color:#fff}
+.poi.stop{background:#3387d6}.poi.gym{background:#d95f58}.poi.power{background:#8d66c9}
+.user-dot{width:20px;height:20px;border-radius:50%;background:#1d76d2;border:4px solid #fff;box-shadow:0 0 0 5px rgba(29,118,210,.20),0 4px 12px rgba(20,64,105,.3)}
+.center-dot{width:18px;height:18px;border-radius:50%;background:#27765a;border:4px solid #fff;box-shadow:0 4px 12px rgba(20,64,51,.25)}
+.demo-note{position:fixed;z-index:17;right:12px;bottom:calc(14px + env(safe-area-inset-bottom));max-width:190px;padding:9px 10px;border-radius:14px;background:rgba(255,255,250,.90);border:1px solid rgba(24,73,57,.12);font-size:9px;line-height:1.45;color:#687a73}
+@media(max-width:380px){.demo-note{max-width:160px}.title-card strong{font-size:16px}}
+</style>
+</head>
+<body>
+<div id="map" aria-label="FIELD exploration map"></div>
+<div class="topbar">
+  <button id="backButton" class="back" type="button">← ブリーフィング</button>
+  <div class="status"><span class="status-dot"></span>探索中 / DEMO</div>
+</div>
+<div class="title-card">
+  <small>FIELD EXPLORATION MAP / DEMO</small>
+  <strong id="parkName">候補公園</strong>
+  <div class="title-meta"><span id="distance" class="pill">距離</span><span id="rank" class="pill">優先度</span><span id="poiCount" class="pill">POI</span></div>
+</div>
+<div class="legend"><b>DEMO表示</b><br>緑線：公園境界（仮）<br>点線円：50m確認円<br>色付き点：既存POI（仮）</div>
+<div class="demo-note">公園境界・POI・50m円はUI確認用ダミーです。AI / Bridge / R2には接続していません。</div>
+<script>
+(()=>{
+  const q=new URLSearchParams(location.search);
+  const park={
+    name:q.get('park')||'候補公園',
+    distance:Number(q.get('distance')||0),
+    rank:q.get('rank')||'-',
+    poi:Number(q.get('poi')||0),
+    lng:Number(q.get('lng')||139.7740),
+    lat:Number(q.get('lat')||35.7148)
+  };
+  const origin={lng:Number(q.get('originLng')||park.lng),lat:Number(q.get('originLat')||park.lat)};
+  document.getElementById('parkName').textContent=park.name;
+  document.getElementById('distance').textContent=`現在地から ${park.distance}m`;
+  document.getElementById('rank').textContent=`優先度 ${park.rank}`;
+  document.getElementById('poiCount').textContent=`既存POI ${park.poi}（デモ）`;
+
+  function destination(point,distanceM,bearingDeg){
+    const R=6371000,brng=bearingDeg*Math.PI/180,lat1=point.lat*Math.PI/180,lng1=point.lng*Math.PI/180,dr=distanceM/R;
+    const lat2=Math.asin(Math.sin(lat1)*Math.cos(dr)+Math.cos(lat1)*Math.sin(dr)*Math.cos(brng));
+    const lng2=lng1+Math.atan2(Math.sin(brng)*Math.sin(dr)*Math.cos(lat1),Math.cos(dr)-Math.sin(lat1)*Math.sin(lat2));
+    return{lng:lng2*180/Math.PI,lat:lat2*180/Math.PI};
+  }
+  function circleGeoJSON(point,radiusM){
+    const coords=[];for(let i=0;i<=96;i++){const p=destination(point,radiusM,i/96*360);coords.push([p.lng,p.lat]);}
+    return{type:'Feature',properties:{},geometry:{type:'Polygon',coordinates:[coords]}};
+  }
+  function boundaryGeoJSON(){
+    const spec=[[0,145],[48,118],[95,155],[142,112],[190,148],[236,120],[285,158],[330,126]];
+    const pts=spec.map(([b,d])=>destination(park,d,b));pts.push(pts[0]);
+    return{type:'Feature',properties:{},geometry:{type:'Polygon',coordinates:[pts.map(p=>[p.lng,p.lat])]}};
+  }
+
+  const map=new maplibregl.Map({container:'map',style:'https://tiles.openfreemap.org/styles/liberty',center:[park.lng,park.lat],zoom:16.1,attributionControl:false});
+  map.addControl(new maplibregl.NavigationControl({showCompass:false}),'top-right');
+  map.addControl(new maplibregl.AttributionControl({compact:true}),'top-right');
+
+  map.on('load',()=>{
+    map.addSource('demo-boundary',{type:'geojson',data:boundaryGeoJSON()});
+    map.addLayer({id:'demo-boundary-fill',type:'fill',source:'demo-boundary',paint:{'fill-color':'#4a9d76','fill-opacity':0.10}});
+    map.addLayer({id:'demo-boundary-line',type:'line',source:'demo-boundary',paint:{'line-color':'#267154','line-width':3,'line-opacity':0.85}});
+    map.addSource('circle-50',{type:'geojson',data:circleGeoJSON(park,50)});
+    map.addLayer({id:'circle-50-fill',type:'fill',source:'circle-50',paint:{'fill-color':'#2f8d69','fill-opacity':0.06}});
+    map.addLayer({id:'circle-50-line',type:'line',source:'circle-50',paint:{'line-color':'#246d50','line-width':2,'line-dasharray':[2,2]}});
+
+    const center=document.createElement('div');center.className='center-dot';new maplibregl.Marker({element:center,anchor:'center'}).setLngLat([park.lng,park.lat]).addTo(map);
+    const user=document.createElement('div');user.className='user-dot';new maplibregl.Marker({element:user,anchor:'center'}).setLngLat([origin.lng,origin.lat]).addTo(map);
+
+    const poiSpec=[[-42,38,'stop','P'],[72,61,'gym','G'],[150,79,'stop','P'],[218,55,'power','S'],[300,92,'stop','P'],[18,108,'gym','G']];
+    poiSpec.slice(0,Math.max(3,Math.min(6,park.poi||5))).forEach(([bearing,distance,type,label])=>{
+      const pos=destination(park,distance,bearing);const el=document.createElement('div');el.className=`poi ${type}`;el.textContent=label;
+      new maplibregl.Marker({element:el,anchor:'center'}).setLngLat([pos.lng,pos.lat]).addTo(map);
+    });
+    const nw=destination(park,230,315),se=destination(park,230,135);
+    map.fitBounds([[nw.lng,se.lat],[se.lng,nw.lat]],{padding:{top:150,bottom:110,left:35,right:35},duration:650,maxZoom:16.8});
+  });
+
+  document.getElementById('backButton').addEventListener('click',()=>{if(history.length>1)history.back();else location.href='./';});
+})();
+</script>
+</body>
+</html>
