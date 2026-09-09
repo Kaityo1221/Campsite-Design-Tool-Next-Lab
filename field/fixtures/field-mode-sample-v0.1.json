@@ -1,0 +1,106 @@
+{
+  "source": "CAMPSITE_AI_HEADQUARTERS",
+  "contract_version": "0.1.0",
+  "mode": "FIELD_MODE",
+  "read_only": true,
+  "automatic_execution": false,
+  "automatic_category_fanout": false,
+  "proposal": {
+    "proposal_id": "sample-field-proposal",
+    "artifact_name": "field-mode-sample.kmz",
+    "artifact_type": "KMZ"
+  },
+  "site": {
+    "proposal_id": "sample-field-proposal",
+    "focal_coordinate": {"lat": 35.6401, "lon": 139.8622},
+    "activity_area_geometry": {
+      "type": "Polygon",
+      "coordinates": [[[139.8609,35.6394],[139.8634,35.6394],[139.8634,35.6413],[139.8609,35.6413],[139.8609,35.6394]]]
+    },
+    "existing_poi_count": 12,
+    "new_poi_count": 4,
+    "review_target_count": 1,
+    "activity_area_present": true,
+    "minimum_new_to_any_poi_distance_m": 44.2,
+    "minimum_spacing_band": "COMPROMISE_40"
+  },
+  "review_targets": [
+    {
+      "target_id": "sample-new-003",
+      "target_class": "MOVABLE_NEW",
+      "poi_type": "POKESTOP",
+      "name": "確認対象サンプル",
+      "coordinate": {"lat": 35.6407, "lon": 139.8628},
+      "inside_activity_area": true,
+      "spacing": {
+        "nearest_poi_id": "sample-existing-001",
+        "nearest_poi_class": "FIXED_EXISTING",
+        "nearest_distance_m": 44.2,
+        "spacing_band": "COMPROMISE_40"
+      },
+      "review_state": "REVIEW_CANDIDATE"
+    }
+  ],
+  "selection_state": "NOT_SELECTED",
+  "core_categories": {
+    "facility": {
+      "category": "facility",
+      "data_state": "NOT_RUN",
+      "status": "NOT_RUN",
+      "confidence": "UNKNOWN",
+      "facts": {},
+      "evidence": [],
+      "observed_at": null,
+      "location": null,
+      "sources": [],
+      "flags": [],
+      "limitations": [],
+      "needs_field_check": null,
+      "routing": {"runtime_status": "ACTIVE"},
+      "selection": {"execution_state": "NO_CANDIDATE", "candidate_count": 0, "candidates": [], "selected": null},
+      "execution_receipt": null
+    },
+    "road": {
+      "category": "road",
+      "data_state": "EXECUTED",
+      "status": "AVAILABLE",
+      "confidence": "HIGH",
+      "facts": {
+        "nearest_road_edge_m": 7.25,
+        "road_edge_count_within_radius": 18
+      },
+      "evidence": [{"kind": "geometry", "fact_key": "nearest_road_edge_m"}],
+      "observed_at": "2026-09-09T10:00:00Z",
+      "location": {"lat": 35.6407, "lon": 139.8628},
+      "sources": [{"provider": "国土地理院", "dataset": "基盤地図情報 一般道路 RdEdg"}],
+      "flags": [{"code": "ROAD_SOURCE_PARTIAL", "level": "REVIEW", "kind": "DATA_QUALITY"}],
+      "limitations": ["道路縁距離は安全性を証明しません。"],
+      "needs_field_check": true,
+      "routing": {"runtime_status": "ACTIVE"},
+      "selection": {"execution_state": "NOT_SELECTED", "candidate_count": 1, "candidates": [], "selected": null},
+      "execution_receipt": {"execution_state": "EXECUTED", "category": "road", "target_id": "sample-new-003"}
+    },
+    "crowd": {
+      "category": "crowd",
+      "data_state": "NOT_RUN",
+      "status": "NOT_RUN",
+      "confidence": "UNKNOWN",
+      "facts": {},
+      "evidence": [],
+      "observed_at": null,
+      "location": null,
+      "sources": [],
+      "flags": [],
+      "limitations": [],
+      "needs_field_check": null,
+      "routing": {"runtime_status": "ACTIVE"},
+      "selection": {"execution_state": "NO_CANDIDATE", "candidate_count": 0, "candidates": [], "selected": null},
+      "execution_receipt": null
+    }
+  },
+  "decision_policy": {
+    "decision_owner": "human",
+    "field_mode_may_execute_categories": false,
+    "field_mode_may_expand_targets": false
+  }
+}
