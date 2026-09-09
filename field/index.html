@@ -9,10 +9,13 @@
 <body>
 <script>
 (async()=>{
-  const VERSION='20260909-04';
+  const VERSION='20260909-05';
   const res=await fetch('./prototype.html?v='+VERSION,{cache:'no-store'});
   if(!res.ok){document.body.textContent='FIELD MODEの読み込みに失敗しました。';return;}
-  const html=await res.text();
+  let html=await res.text();
+  const target="document.body.classList.add('park-open');";
+  const replacement="const params=new URLSearchParams({park:p.name,distance:String(p.distance),rank:p.rank,poi:String(p.poi),lng:String(p.lng),lat:String(p.lat),originLng:String(origin.lng),originLat:String(origin.lat)});location.href='./explore.html?'+params.toString();return;";
+  html=html.replace(target,replacement);
   document.open();document.write(html);document.close();
 })().catch(err=>{console.error(err);document.body.textContent='FIELD MODEの読み込みに失敗しました。';});
 </script>
