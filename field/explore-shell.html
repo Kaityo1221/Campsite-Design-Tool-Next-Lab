@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover,user-scalable=no">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>FIELD EXPLORATION | Next Lab</title>
+</head>
+<body>
+<script>
+(async()=>{
+  const VERSION='20260910-01';
+  const res=await fetch('./explore.html?v='+VERSION,{cache:'no-store'});
+  if(!res.ok){document.body.textContent='FIELD EXPLORATIONの読み込みに失敗しました。';return;}
+  let html=await res.text();
+  html=html.replace('const map=new maplibregl.Map','const map=window.__FIELD_MAP__=new maplibregl.Map');
+  html=html.replace('</body>',`<script type="module" src="./field-mode-consumer.js?v=${VERSION}"><\/script></body>`);
+  document.open();document.write(html);document.close();
+})().catch(err=>{console.error(err);document.body.textContent='FIELD EXPLORATIONの読み込みに失敗しました。';});
+</script>
+</body>
+</html>
