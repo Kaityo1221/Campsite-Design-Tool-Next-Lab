@@ -1,0 +1,36 @@
+name: FIELD MODE Consumer Tests
+
+on:
+  push:
+    paths:
+      - "field/field-mode-contract.mjs"
+      - "field/field-mode-consumer.js"
+      - "field/index.html"
+      - "field/explore-shell.html"
+      - "field/fixtures/**"
+      - "field/tests/**"
+      - ".github/workflows/field-mode-consumer-tests.yml"
+  pull_request:
+    paths:
+      - "field/field-mode-contract.mjs"
+      - "field/field-mode-consumer.js"
+      - "field/index.html"
+      - "field/explore-shell.html"
+      - "field/fixtures/**"
+      - "field/tests/**"
+      - ".github/workflows/field-mode-consumer-tests.yml"
+
+jobs:
+  test-field-mode-consumer:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Run FIELD MODE contract tests
+        run: node --test field/tests/field-mode-contract.test.mjs
