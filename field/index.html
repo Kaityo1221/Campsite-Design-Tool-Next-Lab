@@ -9,13 +9,16 @@
 <body>
 <script>
 (async()=>{
-  const VERSION='20260909-01';
+  const VERSION='20260909-02';
   const res=await fetch('./prototype.html?v='+VERSION,{cache:'no-store'});
   if(!res.ok){document.body.textContent='FIELD MODEの読み込みに失敗しました。';return;}
   let html=await res.text();
 
-  html=html.replace('body.discovered .explore-wrap{top:auto;bottom:calc(252px + env(safe-area-inset-bottom));width:min(70vw,290px)}','body.discovered .explore-wrap{top:auto;bottom:calc(348px + env(safe-area-inset-bottom));width:min(70vw,290px)}');
-  html=html.replace('body.discovered .explore-wrap{bottom:calc(242px + env(safe-area-inset-bottom))}','body.discovered .explore-wrap{bottom:calc(338px + env(safe-area-inset-bottom))}');
+  // 探索ボタン・候補サークル・詳細パネルを3段に分離する。
+  html=html.replace('body.discovered .explore-wrap{top:auto;bottom:calc(252px + env(safe-area-inset-bottom));width:min(70vw,290px)}','body.discovered .explore-wrap{top:auto;bottom:calc(clamp(520px,49vh,570px) + env(safe-area-inset-bottom));width:min(70vw,290px)}');
+  html=html.replace('body.discovered .explore-wrap{bottom:calc(242px + env(safe-area-inset-bottom))}','body.discovered .explore-wrap{bottom:calc(clamp(500px,47vh,550px) + env(safe-area-inset-bottom))}');
+  html=html.replace('.candidate-stage{position:fixed;z-index:17;left:0;right:0;bottom:calc(196px + env(safe-area-inset-bottom));height:138px;display:none;align-items:flex-end;justify-content:center;overflow:visible;touch-action:pan-y;padding-bottom:2px}','.candidate-stage{position:fixed;z-index:17;left:0;right:0;bottom:calc(clamp(370px,36vh,420px) + env(safe-area-inset-bottom));height:138px;display:none;align-items:flex-end;justify-content:center;overflow:visible;touch-action:pan-y;padding-bottom:2px}');
+  html=html.replace('.candidate-stage{bottom:calc(190px + env(safe-area-inset-bottom))}','.candidate-stage{bottom:calc(clamp(350px,34vh,400px) + env(safe-area-inset-bottom))}');
 
   // 候補番号は距離順、A/B/Cは調査優先度。
   // prototype の 1=280m/B, 2=620m/A, 3=940m/C をそのまま使用する。
