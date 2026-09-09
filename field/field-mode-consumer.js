@@ -269,6 +269,9 @@ export async function connectFieldModePayload() {
   const bound = queryFlag('fieldBind');
   persistPayload(loaded.payload);
   announceConnection(loaded.payload, loaded.source, bound);
+  if (bound) {
+    window.addEventListener('field-mode:briefing-open', () => renderBriefing(loaded.payload, true));
+  }
   renderBriefing(loaded.payload, bound);
   renderExploreLegend(loaded.payload, bound);
   renderMapOverlays(loaded.payload, bound);
