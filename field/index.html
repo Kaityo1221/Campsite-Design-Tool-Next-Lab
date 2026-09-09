@@ -9,14 +9,18 @@
 <body>
 <script>
 (async()=>{
-  const VERSION='20260909-02';
+  const VERSION='20260909-03';
   const res=await fetch('./prototype.html?v='+VERSION,{cache:'no-store'});
   if(!res.ok){document.body.textContent='FIELD MODEの読み込みに失敗しました。';return;}
   let html=await res.text();
 
-  // 探索ボタン・候補サークル・詳細パネルを3段に分離する。
-  html=html.replace('body.discovered .explore-wrap{top:auto;bottom:calc(252px + env(safe-area-inset-bottom));width:min(70vw,290px)}','body.discovered .explore-wrap{top:auto;bottom:calc(clamp(520px,49vh,570px) + env(safe-area-inset-bottom));width:min(70vw,290px)}');
-  html=html.replace('body.discovered .explore-wrap{bottom:calc(242px + env(safe-area-inset-bottom))}','body.discovered .explore-wrap{bottom:calc(clamp(500px,47vh,550px) + env(safe-area-inset-bottom))}');
+  // 探索後は再探索を右上へ。GPS状態チップは初回確認後に隠す。
+  html=html.replace('body.discovered .explore-wrap{top:auto;bottom:calc(252px + env(safe-area-inset-bottom));width:min(70vw,290px)}','body.discovered .explore-wrap{left:auto;right:12px;top:calc(10px + env(safe-area-inset-top));bottom:auto;transform:none;width:auto}');
+  html=html.replace('body.discovered .explore-button{min-height:46px;border-radius:999px;padding:10px 16px;font-size:13px}','body.discovered .explore-button{min-height:42px;border-radius:999px;padding:9px 14px;font-size:12px}');
+  html=html.replace('body.discovered .explore-button .radar{width:18px;height:18px}','body.discovered .explore-button .radar{display:none}body.discovered .gps-chip{display:none}');
+  html=html.replace('body.discovered .explore-wrap{bottom:calc(242px + env(safe-area-inset-bottom))}','body.discovered .explore-wrap{left:auto;right:12px;top:calc(10px + env(safe-area-inset-top));bottom:auto;transform:none;width:auto}');
+
+  // 候補サークルと詳細パネルを分離。
   html=html.replace('.candidate-stage{position:fixed;z-index:17;left:0;right:0;bottom:calc(196px + env(safe-area-inset-bottom));height:138px;display:none;align-items:flex-end;justify-content:center;overflow:visible;touch-action:pan-y;padding-bottom:2px}','.candidate-stage{position:fixed;z-index:17;left:0;right:0;bottom:calc(clamp(370px,36vh,420px) + env(safe-area-inset-bottom));height:138px;display:none;align-items:flex-end;justify-content:center;overflow:visible;touch-action:pan-y;padding-bottom:2px}');
   html=html.replace('.candidate-stage{bottom:calc(190px + env(safe-area-inset-bottom))}','.candidate-stage{bottom:calc(clamp(350px,34vh,400px) + env(safe-area-inset-bottom))}');
 
@@ -37,8 +41,41 @@
   html=html.replace("button.className='candidate'+(pos===1?' center':'');","button.className='candidate'+(pos===1?' center':'')+(idx===selected?' selected':'');");
   html=html.replace('selectPark(selected+(dx<0?1:-1),true);','const order=[2,0,1];const pos=order.indexOf(selected);const next=(pos+(dx<0?1:-1)+order.length)%order.length;selectPark(order[next],true);');
 
-  // 地図ライセンスは消さず、MapLibre標準のコンパクト表示にする。
-  // 候補サークルと干渉しないよう、ズームボタンと同じ右上コントロール列に置く。
+  // 再探索はGPSを取り直してから、新しい現在地を起点に探索し直す。
+  html=html.replace(
+`    function discover(){
+      discovered=true;
+      document.body.classList.add('discovered');
+      exploreButton.querySelector('span:last-child').textContent='この周辺を再探索';
+      drawRange();
+      renderCandidates();
+      fitSearchArea();
+    }`,
+`    function discover(){
+      if(discovered){
+        exploreButton.disabled=true;
+        exploreButton.querySelector('span:last-child').textContent='GPS更新中';
+        if(navigator.geolocation){
+          navigator.geolocation.getCurrentPosition(
+            pos=>{updateOrigin(pos.coords.longitude,pos.coords.latitude,true);fitSearchArea();exploreButton.disabled=false;exploreButton.querySelector('span:last-child').textContent='再探索';},
+            ()=>{fitSearchArea();exploreButton.disabled=false;exploreButton.querySelector('span:last-child').textContent='再探索';},
+            {enableHighAccuracy:true,timeout:7000,maximumAge:0}
+          );
+        }else{
+          fitSearchArea();exploreButton.disabled=false;exploreButton.querySelector('span:last-child').textContent='再探索';
+        }
+        return;
+      }
+      discovered=true;
+      document.body.classList.add('discovered');
+      exploreButton.querySelector('span:last-child').textContent='再探索';
+      drawRange();
+      renderCandidates();
+      fitSearchArea();
+    }`
+  );
+
+  // 地図ライセンスは消さず、右上コントロール列へ。
   html=html.replace('attributionControl:true','attributionControl:false');
   html=html.replace(
     "map.addControl(new maplibregl.NavigationControl({showCompass:false}),'top-right');",
