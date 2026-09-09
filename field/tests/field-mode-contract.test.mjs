@@ -58,11 +58,15 @@ test('keeps category execution state explicit', () => {
 test('FIELD entry and exploration shell both install the read-only consumer', async () => {
   const indexHtml = await readFile(resolve(here, '../index.html'), 'utf8');
   const shellHtml = await readFile(resolve(here, '../explore-shell.html'), 'utf8');
+  const consumerJs = await readFile(resolve(here, '../field-mode-consumer.js'), 'utf8');
   assert.match(indexHtml, /field-mode-consumer\.js/);
   assert.match(indexHtml, /explore-shell\.html/);
   assert.match(indexHtml, /fieldPayloadUrl/);
   assert.match(indexHtml, /fieldBind/);
   assert.match(indexHtml, /window\.__FIELD_MAP__/);
+  assert.match(indexHtml, /__CAMPSITE_FIELD_MODE_CONSUMER__\?\.bound/);
+  assert.match(indexHtml, /field-mode:briefing-open/);
+  assert.match(consumerJs, /addEventListener\('field-mode:briefing-open'/);
   assert.match(shellHtml, /field-mode-consumer\.js/);
   assert.match(shellHtml, /window\.__FIELD_MAP__/);
 });
