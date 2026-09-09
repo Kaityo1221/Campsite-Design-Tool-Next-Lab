@@ -9,7 +9,7 @@
 <body>
 <script>
 (async()=>{
-  const VERSION='20260910-01';
+  const VERSION='20260910-02';
   const res=await fetch('./prototype.html?v='+VERSION,{cache:'no-store'});
   if(!res.ok){document.body.textContent='FIELD MODEの読み込みに失敗しました。';return;}
   let html=await res.text();
@@ -17,6 +17,12 @@
   // Expose only the rendered map instance to the read-only FIELD consumer.
   // The consumer never triggers Core AI execution.
   html=html.replace('const map=new maplibregl.Map','const map=window.__FIELD_MAP__=new maplibregl.Map');
+
+  // When an explicit site binding exists, do not let Phase 1 DEMO timers overwrite
+  // Headquarters Core facts after the user opens another briefing candidate.
+  const demoRevealTarget="revealBrief('briefRoad',p.briefing.road,250);revealBrief('briefFacility',p.briefing.facility,650);revealBrief('briefCrowd',p.briefing.crowd,1050)";
+  const demoRevealReplacement="if(window.__CAMPSITE_FIELD_MODE_CONSUMER__?.bound){window.dispatchEvent(new CustomEvent('field-mode:briefing-open'));}else{revealBrief('briefRoad',p.briefing.road,250);revealBrief('briefFacility',p.briefing.facility,650);revealBrief('briefCrowd',p.briefing.crowd,1050)}";
+  html=html.replace(demoRevealTarget,demoRevealReplacement);
 
   const target="document.body.classList.add('park-open');";
   const replacement="const params=new URLSearchParams({park:p.name,distance:String(p.distance),rank:p.rank,poi:String(p.poi),lng:String(p.lng),lat:String(p.lat),originLng:String(origin.lng),originLat:String(origin.lat)});const inherited=new URLSearchParams(location.search);const fieldPayloadUrl=inherited.get('fieldPayloadUrl');if(fieldPayloadUrl)params.set('fieldPayloadUrl',fieldPayloadUrl);const fieldBind=inherited.get('fieldBind');if(fieldBind)params.set('fieldBind',fieldBind);location.href='./explore-shell.html?'+params.toString();return;";
