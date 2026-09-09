@@ -54,3 +54,15 @@ test('keeps category execution state explicit', () => {
   assert.equal(road.facts.nearest_road_edge_m, 7.25);
   assert.equal(road.needsFieldCheck, true);
 });
+
+test('FIELD entry and exploration shell both install the read-only consumer', async () => {
+  const indexHtml = await readFile(resolve(here, '../index.html'), 'utf8');
+  const shellHtml = await readFile(resolve(here, '../explore-shell.html'), 'utf8');
+  assert.match(indexHtml, /field-mode-consumer\.js/);
+  assert.match(indexHtml, /explore-shell\.html/);
+  assert.match(indexHtml, /fieldPayloadUrl/);
+  assert.match(indexHtml, /fieldBind/);
+  assert.match(indexHtml, /window\.__FIELD_MAP__/);
+  assert.match(shellHtml, /field-mode-consumer\.js/);
+  assert.match(shellHtml, /window\.__FIELD_MAP__/);
+});
