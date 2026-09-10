@@ -9,52 +9,60 @@
 <body>
 <script>
 (async()=>{
-  const CACHE_VERSION='20260910-05';
-  const [runtimeRes,patchRes,patchV3Res,patchV4Res,patchV5Res,patchV6Res,patchV7Res,trackingRes,backfillRes]=await Promise.all([
-    fetch('./runtime-vnext.html?v='+CACHE_VERSION,{cache:'no-store'}),
-    fetch('./creative-patches-v2.js?v='+CACHE_VERSION,{cache:'no-store'}),
-    fetch('./creative-patches-v3.js?v='+CACHE_VERSION,{cache:'no-store'}),
-    fetch('./creative-patches-v4.js?v='+CACHE_VERSION,{cache:'no-store'}),
-    fetch('./creative-patches-v5-design-check.js?v='+CACHE_VERSION,{cache:'no-store'}),
-    fetch('./creative-patches-v6-intuitive.js?v='+CACHE_VERSION,{cache:'no-store'}),
-    fetch('./creative-patches-v7-runtime-bridge.js?v='+CACHE_VERSION,{cache:'no-store'}),
-    fetch('./creative-tracking-patch.js?v='+CACHE_VERSION,{cache:'no-store'}),
-    fetch('./creative-backfill-upload.js?v='+CACHE_VERSION,{cache:'no-store'})
-  ]);
-  if(!runtimeRes.ok||!patchRes.ok||!patchV3Res.ok||!patchV4Res.ok||!patchV5Res.ok||!patchV6Res.ok||!patchV7Res.ok||!trackingRes.ok||!backfillRes.ok){document.body.textContent='Creative Modeの読み込みに失敗しました。';return;}
-  let src=await runtimeRes.text();
+  const CACHE_VERSION='20260910-06';
+  const fail=(stage,e)=>{
+    document.body.style.cssText='margin:0;padding:24px;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#8c2f28;white-space:pre-wrap';
+    document.body.textContent='CREATIVE MODE 読み込みエラー\n\n段階: '+stage+'\n'+(e&&e.stack?e.stack:(e&&e.message?e.message:String(e||'')));
+  };
+  try{
+    const [runtimeRes,patchRes,patchV3Res,patchV4Res,patchV5Res,patchV8Res,trackingRes,backfillRes]=await Promise.all([
+      fetch('./runtime-vnext.html?v='+CACHE_VERSION,{cache:'no-store'}),
+      fetch('./creative-patches-v2.js?v='+CACHE_VERSION,{cache:'no-store'}),
+      fetch('./creative-patches-v3.js?v='+CACHE_VERSION,{cache:'no-store'}),
+      fetch('./creative-patches-v4.js?v='+CACHE_VERSION,{cache:'no-store'}),
+      fetch('./creative-patches-v5-design-check.js?v='+CACHE_VERSION,{cache:'no-store'}),
+      fetch('./creative-patches-v8-direct-base.js?v='+CACHE_VERSION,{cache:'no-store'}),
+      fetch('./creative-tracking-patch.js?v='+CACHE_VERSION,{cache:'no-store'}),
+      fetch('./creative-backfill-upload.js?v='+CACHE_VERSION,{cache:'no-store'})
+    ]);
+    const responses=[runtimeRes,patchRes,patchV3Res,patchV4Res,patchV5Res,patchV8Res,trackingRes,backfillRes];
+    const names=['runtime','v2','v3','v4','v5','v8','tracking','backfill'];
+    const bad=responses.findIndex(r=>!r.ok);
+    if(bad>=0){fail('fetch '+names[bad],new Error('HTTP '+responses[bad].status));return}
+    let src=await runtimeRes.text();
 
-  // runtime-vnext が base-v7.html を読み込んだ直後に、削除済み旧main参照を固定コミットへ差し替える。
-  const oldBg='https://raw.githubusercontent.com/Kaityo1221/campsite-design-tool-adv-lab/main/creative/runtime/assets/creative-mode-opening.png';
-  const fixedBg='https://raw.githubusercontent.com/Kaityo1221/campsite-design-tool-adv-lab/1c27ca3ef14f423688f755d350ecc602bee1c573/creative/runtime/assets/creative-mode-opening.png';
-  const baseLoadNeedle='let html=await res.text();';
-  if(src.includes(baseLoadNeedle)){
-    src=src.replace(baseLoadNeedle,baseLoadNeedle+`\n  html=html.replace(${JSON.stringify(oldBg)},${JSON.stringify(fixedBg)});`);
-  }
+    const oldBg='https://raw.githubusercontent.com/Kaityo1221/campsite-design-tool-adv-lab/main/creative/runtime/assets/creative-mode-opening.png';
+    const fixedBg='https://raw.githubusercontent.com/Kaityo1221/campsite-design-tool-adv-lab/1c27ca3ef14f423688f755d350ecc602bee1c573/creative/runtime/assets/creative-mode-opening.png';
+    const baseLoadNeedle='let html=await res.text();';
+    if(src.includes(baseLoadNeedle))src=src.replace(baseLoadNeedle,baseLoadNeedle+`\n  html=html.replace(${JSON.stringify(oldBg)},${JSON.stringify(fixedBg)});`);
 
-  Function(await patchRes.text())();
-  Function(await patchV3Res.text())();
-  Function(await patchV4Res.text())();
-  Function(await patchV5Res.text())();
-  Function(await patchV6Res.text())();
-  Function(await patchV7Res.text())();
-  Function(await trackingRes.text())();
-  Function(await backfillRes.text())();
-  if(typeof window.applyCreativePatches!=='function'||typeof window.applyCreativeTrackingPatch!=='function'||typeof window.applyCreativeBackfillUpload!=='function'){document.body.textContent='Creative Modeの拡張機能を読み込めませんでした。';return;}
-  src=window.applyCreativePatches(src);
-  src=window.applyCreativeTrackingPatch(src);
-  src=window.applyCreativeBackfillUpload(src);
+    try{
+      Function(await patchRes.text())();
+      Function(await patchV3Res.text())();
+      Function(await patchV4Res.text())();
+      Function(await patchV5Res.text())();
+      Function(await patchV8Res.text())();
+      Function(await trackingRes.text())();
+      Function(await backfillRes.text())();
+    }catch(e){fail('patch init',e);return}
 
-  // 旧マニュアル互換：My Mapsへnearby-wayspots CSVを個別投入したKMZでも、
-  // ExtendedDataのgameEntity（POKESTOP / GYM / POWERSPOT）を優先して正式レイヤーへ振り分ける。
-  const runtimeWriteNeedle='document.open();document.write(html);document.close();';
-  const legacyLayerPatch=`const legacyInferNeedle="function inferLayer(pm,f,n){const explicit=explicitLayer(pm);if(explicit)return explicit;const exact=layerByLabel.get(String(f||'').trim());if(exact)return exact;const style=(child(pm,'styleUrl')||'').replace(/^#/,'');if(style.startsWith('creative-')){const styled=style.slice('creative-'.length);if(layerKeys.has(styled))return styled}const h=(f+' '+n).toLowerCase(),fresh=/追加|新規|候補|add|new|planned/.test(h);if(/gym|ジム/.test(h))return fresh?'new-gym':'existing-gym';if(/power|パワー/.test(h))return fresh?'new-power':'existing-power';return fresh?'new-pokestop':'existing-pokestop'}";
-const legacyInferReplacement="function legacyGameEntity(pm){for(const data of pm.getElementsByTagNameNS('*','Data')){const key=String(data.getAttribute('name')||'').replace(/^\\uFEFF/,'').trim().toLowerCase();if(key!=='gameentity')continue;const value=[...data.children].find(x=>x.localName==='value')?.textContent?.trim()||data.textContent?.trim()||'';return String(value).trim().toUpperCase()}return''}function inferLayer(pm,f,n){const explicit=explicitLayer(pm);if(explicit)return explicit;const exact=layerByLabel.get(String(f||'').trim());if(exact)return exact;const style=(child(pm,'styleUrl')||'').replace(/^#/,'');if(style.startsWith('creative-')){const styled=style.slice('creative-'.length);if(layerKeys.has(styled))return styled}const h=(f+' '+n).toLowerCase(),fresh=/追加|新規|候補|add|new|planned/.test(h),entity=legacyGameEntity(pm);if(entity==='GYM')return fresh?'new-gym':'existing-gym';if(entity==='POWERSPOT'||entity==='POWER_SPOT'||entity==='POWER SPOT')return fresh?'new-power':'existing-power';if(entity==='POKESTOP'||entity==='POKÉSTOP'||entity==='POKE_STOP')return fresh?'new-pokestop':'existing-pokestop';if(/gym|ジム/.test(h))return fresh?'new-gym':'existing-gym';if(/power|パワー/.test(h))return fresh?'new-power':'existing-power';return fresh?'new-pokestop':'existing-pokestop'}";
-if(html.includes(legacyInferNeedle))html=html.replace(legacyInferNeedle,legacyInferReplacement);`;
-  if(src.includes(runtimeWriteNeedle))src=src.replace(runtimeWriteNeedle,legacyLayerPatch+runtimeWriteNeedle);
+    if(typeof window.applyCreativePatches!=='function'||typeof window.applyCreativeTrackingPatch!=='function'||typeof window.applyCreativeBackfillUpload!=='function'){
+      fail('patch registration',new Error('必要なパッチ関数が見つかりません'));return;
+    }
 
-  document.open();document.write(src);document.close();
-})().catch(()=>{document.body.textContent='Creative Modeの読み込みに失敗しました。';});
+    try{
+      src=window.applyCreativePatches(src);
+      src=window.applyCreativeTrackingPatch(src);
+      src=window.applyCreativeBackfillUpload(src);
+    }catch(e){fail('runtime transform',e);return}
+
+    const runtimeWriteNeedle='document.open();document.write(html);document.close();';
+    const legacyLayerPatch=`const legacyInferNeedle="function inferLayer(pm,f,n){const explicit=explicitLayer(pm);if(explicit)return explicit;const exact=layerByLabel.get(String(f||'').trim());if(exact)return exact;const style=(child(pm,'styleUrl')||'').replace(/^#/,'');if(style.startsWith('creative-')){const styled=style.slice('creative-'.length);if(layerKeys.has(styled))return styled}const h=(f+' '+n).toLowerCase(),fresh=/追加|新規|候補|add|new|planned/.test(h);if(/gym|ジム/.test(h))return fresh?'new-gym':'existing-gym';if(/power|パワー/.test(h))return fresh?'new-power':'existing-power';return fresh?'new-pokestop':'existing-pokestop'}";const legacyInferReplacement="function legacyGameEntity(pm){for(const data of pm.getElementsByTagNameNS('*','Data')){const key=String(data.getAttribute('name')||'').replace(/^\\uFEFF/,'').trim().toLowerCase();if(key!=='gameentity')continue;const value=[...data.children].find(x=>x.localName==='value')?.textContent?.trim()||data.textContent?.trim()||'';return String(value).trim().toUpperCase()}return''}function inferLayer(pm,f,n){const explicit=explicitLayer(pm);if(explicit)return explicit;const exact=layerByLabel.get(String(f||'').trim());if(exact)return exact;const style=(child(pm,'styleUrl')||'').replace(/^#/,'');if(style.startsWith('creative-')){const styled=style.slice('creative-'.length);if(layerKeys.has(styled))return styled}const h=(f+' '+n).toLowerCase(),fresh=/追加|新規|候補|add|new|planned/.test(h),entity=legacyGameEntity(pm);if(entity==='GYM')return fresh?'new-gym':'existing-gym';if(entity==='POWERSPOT'||entity==='POWER_SPOT'||entity==='POWER SPOT')return fresh?'new-power':'existing-power';if(entity==='POKESTOP'||entity==='POKÉSTOP'||entity==='POKE_STOP')return fresh?'new-pokestop':'existing-pokestop';if(/gym|ジム/.test(h))return fresh?'new-gym':'existing-gym';if(/power|パワー/.test(h))return fresh?'new-power':'existing-power';return fresh?'new-pokestop':'existing-pokestop'}";if(html.includes(legacyInferNeedle))html=html.replace(legacyInferNeedle,legacyInferReplacement);`;
+    if(src.includes(runtimeWriteNeedle))src=src.replace(runtimeWriteNeedle,legacyLayerPatch+runtimeWriteNeedle);
+
+    document.open();document.write(src);document.close();
+  }catch(e){fail('bootstrap',e)}
+})();
 </script>
 </body>
 </html>
