@@ -11,7 +11,7 @@
 <div id="boot" class="boot"><div><strong>CREATIVE MODE</strong><small>読み込み中…</small></div></div>
 <script>
 (async()=>{
-  const VERSION='20260910-12';
+  const VERSION='20260910-13';
   const boot=document.getElementById('boot');
   const fail=(stage,e)=>{
     boot.innerHTML='';
@@ -36,7 +36,8 @@
       './creative-patches-v5-design-check.js?v=${VERSION}',
       './creative-patches-v6-intuitive.js?v=${VERSION}',
       './creative-patches-v9-return-main.js?v=${VERSION}',
-      './creative-patches-v10-save-labels.js?v=${VERSION}'
+      './creative-patches-v10-save-labels.js?v=${VERSION}',
+      './creative-patches-v13-draggable-fab.js?v=${VERSION}'
     ];
     window.applyCreativePatches=s=>s;
     for(const url of patchUrls){
