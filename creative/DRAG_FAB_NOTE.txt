@@ -1,0 +1,1 @@
+CREATIVE MODE add FAB: tap opens 3 bubbles; drag moves the FAB; dragged position is clamped inside the viewport and persisted locally. Added in 20260910-13.
