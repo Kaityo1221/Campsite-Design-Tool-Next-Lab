@@ -4,11 +4,18 @@
 
   window.applyCreativePatches=function(src){
     src=previous(src);
-    const target='https://kaityo1221.github.io/Campsite-Design-Tool-JP/';
+    const mainTarget='https://kaityo1221.github.io/Campsite-Design-Tool-JP/';
 
-    // CREATIVE MODE の「戻る」と、KMZ出力後の「Campsite Design Toolに戻る」は
-    // Next Lab の開発ランディングを経由せず、本体メイン画面へ直接戻す。
-    src=src.replace(/location\.href\s*=\s*['"]\.\.\/index\.html['"]/g,`location.href='${target}'`);
+    // 画面上部の「戻る」は CREATIVE MODE の開始画面へ戻す。
+    // 現在の検証URL自身へ戻すことで、Next Labの開発トップや本体認証画面を挟まない。
+    const backOld="$('back').onclick=()=>{snapshot();cmPersistCurrent();location.href='../index.html'};";
+    const backNew="$('back').onclick=()=>{snapshot();cmPersistCurrent();location.href=location.origin+location.pathname};";
+    if(src.includes(backOld))src=src.replace(backOld,backNew);
+
+    // KMZ出力後の「Campsite Design Toolに戻る」だけは、本体へ戻す。
+    const returnOld="b.onclick=()=>{snapshot();cmPersistCurrent();location.href='../index.html'};document.body.appendChild(b)}";
+    const returnNew=`b.onclick=()=>{snapshot();cmPersistCurrent();location.href='${mainTarget}'};document.body.appendChild(b)}`;
+    if(src.includes(returnOld))src=src.replace(returnOld,returnNew);
 
     return src;
   };
