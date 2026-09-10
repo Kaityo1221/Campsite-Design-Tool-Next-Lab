@@ -9,6 +9,10 @@
     if(!src.includes(uiMarker))return src;
 
     const helper=`
+let cmRadiusGestureUntil=0;
+function cmBlockPlacementForRadius(ms=500){
+  cmRadiusGestureUntil=Math.max(cmRadiusGestureUntil,Date.now()+ms);
+}
 function cmApplyGuideRadiusLive(v){
   const radius=Math.max(30,Math.min(50,Number(v)||50));
   cmGuideRadius=radius;
@@ -30,9 +34,11 @@ function cmEnableRadiusSwipe(){
   state.title='上下にスライドして距離円を変更';
   state.setAttribute('aria-label','上下にスライドして距離円を変更');
   let drag=null,lastStep=null;
+  const swallow=e=>{e.preventDefault();e.stopPropagation();cmBlockPlacementForRadius(550)};
   state.addEventListener('pointerdown',e=>{
     if(!cmAddMode)return;
-    e.preventDefault();e.stopPropagation();
+    swallow(e);
+    cmBlockPlacementForRadius(1200);
     drag={id:e.pointerId,startY:e.clientY,startRadius:cmGuideRadius,current:cmGuideRadius};
     lastStep=Math.round(cmGuideRadius/10)*10;
     state.style.transform='scale(1.12)';
@@ -40,7 +46,8 @@ function cmEnableRadiusSwipe(){
   });
   state.addEventListener('pointermove',e=>{
     if(!drag||drag.id!==e.pointerId)return;
-    e.preventDefault();e.stopPropagation();
+    swallow(e);
+    cmBlockPlacementForRadius(900);
     const dy=e.clientY-drag.startY;
     const next=Math.max(30,Math.min(50,drag.startRadius-dy*.22));
     drag.current=next;
@@ -50,7 +57,8 @@ function cmEnableRadiusSwipe(){
   });
   const finish=e=>{
     if(!drag||drag.id!==e.pointerId)return;
-    e.preventDefault();e.stopPropagation();
+    swallow(e);
+    cmBlockPlacementForRadius(700);
     const snap=Math.max(30,Math.min(50,Math.round(drag.current/10)*10));
     drag=null;
     state.style.transform='';
@@ -61,10 +69,17 @@ function cmEnableRadiusSwipe(){
   };
   state.addEventListener('pointerup',finish);
   state.addEventListener('pointercancel',finish);
+  state.addEventListener('click',swallow,true);
+  state.addEventListener('touchstart',e=>{e.stopPropagation();cmBlockPlacementForRadius(1200)},{passive:true});
+  state.addEventListener('touchend',e=>{e.stopPropagation();cmBlockPlacementForRadius(700)},{passive:true});
 }
 `;
 
     src=src.replace(uiMarker,helper+uiMarker);
+
+    const mapClickNeedle="function cmMapClick(e){if(cmSheet&&!cmAddMode){cmCloseSheet();return}if(cmAddMenuOpen){cmCloseAddMenu();return}if(cmAddMode)cmPlace(e.latlng)}";
+    const mapClickFixed="function cmMapClick(e){if(Date.now()<cmRadiusGestureUntil)return;if(cmSheet&&!cmAddMode){cmCloseSheet();return}if(cmAddMenuOpen){cmCloseAddMenu();return}if(cmAddMode)cmPlace(e.latlng)}";
+    if(src.includes(mapClickNeedle))src=src.replace(mapClickNeedle,mapClickFixed);
 
     const installNeedle='cmInstallFab();cmEnableFabDrag();';
     if(src.includes(installNeedle)){
