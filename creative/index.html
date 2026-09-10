@@ -11,7 +11,7 @@
 <div id="boot" class="boot"><div><strong>CREATIVE MODE</strong><small>読み込み中…</small></div></div>
 <script>
 (async()=>{
-  const VERSION='20260910-17';
+  const VERSION='20260910-18';
   const boot=document.getElementById('boot');
   const fail=(stage,e)=>{
     boot.innerHTML='';
@@ -38,7 +38,8 @@
       './creative-patches-v9-return-main.js?v=${VERSION}',
       './creative-patches-v10-save-labels.js?v=${VERSION}',
       './creative-patches-v13-draggable-fab.js?v=${VERSION}',
-      './creative-patches-v14-layer-tap-layout.js?v=${VERSION}'
+      './creative-patches-v14-layer-tap-layout.js?v=${VERSION}',
+      './creative-patches-v18-preview-crosshair.js?v=${VERSION}'
     ];
     window.applyCreativePatches=s=>s;
     for(const url of patchUrls){
@@ -49,10 +50,7 @@
     }
     html=window.applyCreativePatches(html);
 
-    // iOS Safari/Chrome: never restrict the file picker with accept.
-    // 1) Remove accept from the final input markup regardless of attribute order/quoting.
     html=html.replace(/<input\\b[^>]*\\bid=[\"']entryFile[\"'][^>]*>/i,m=>m.replace(/\\saccept\\s*=\\s*(?:\"[^\"]*\"|'[^']*'|[^\\s>]+)/i,''));
-    // 2) Also clear it at runtime before the change handler is attached, so WebKit sees no filter on tap.
     html=html.replace('entryFile.onchange=()=>{',\"entryFile.removeAttribute('accept');entryFile.accept='';entryFile.onchange=()=>{\");
   }catch(e){
     document.body.style.cssText='margin:0;padding:24px;background:#17130f;color:#ffd0c8;font-family:-apple-system,BlinkMacSystemFont,sans-serif;white-space:pre-wrap';
