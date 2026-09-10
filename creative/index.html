@@ -5,62 +5,54 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover,user-scalable=no">
 <meta name="robots" content="noindex,nofollow,noarchive">
 <title>CREATIVE MODE | Next Lab</title>
+<style>html,body{margin:0;width:100%;height:100%;background:#17130f;color:#fff8e8;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.boot{min-height:100%;display:grid;place-items:center;padding:24px;box-sizing:border-box;text-align:center}.boot small{display:block;margin-top:8px;opacity:.7}.error{white-space:pre-wrap;text-align:left;color:#ffd0c8;background:#3b1713;border:1px solid #87453d;border-radius:16px;padding:16px;max-width:720px;width:100%;box-sizing:border-box}</style>
 </head>
 <body>
+<div id="boot" class="boot"><div><strong>CREATIVE MODE</strong><small>読み込み中…</small></div></div>
 <script>
 (async()=>{
-  const CACHE_VERSION='20260910-06';
+  const VERSION='20260910-07';
+  const boot=document.getElementById('boot');
   const fail=(stage,e)=>{
-    document.body.style.cssText='margin:0;padding:24px;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#8c2f28;white-space:pre-wrap';
-    document.body.textContent='CREATIVE MODE 読み込みエラー\n\n段階: '+stage+'\n'+(e&&e.stack?e.stack:(e&&e.message?e.message:String(e||'')));
+    boot.innerHTML='';
+    const box=document.createElement('div');box.className='error';
+    box.textContent='CREATIVE MODE 読み込みエラー\n\n段階: '+stage+'\n'+(e&&e.stack?e.stack:(e&&e.message?e.message:String(e||'')));
+    boot.appendChild(box);
   };
   try{
-    const [runtimeRes,patchRes,patchV3Res,patchV4Res,patchV5Res,patchV8Res,trackingRes,backfillRes]=await Promise.all([
-      fetch('./runtime-vnext.html?v='+CACHE_VERSION,{cache:'no-store'}),
-      fetch('./creative-patches-v2.js?v='+CACHE_VERSION,{cache:'no-store'}),
-      fetch('./creative-patches-v3.js?v='+CACHE_VERSION,{cache:'no-store'}),
-      fetch('./creative-patches-v4.js?v='+CACHE_VERSION,{cache:'no-store'}),
-      fetch('./creative-patches-v5-design-check.js?v='+CACHE_VERSION,{cache:'no-store'}),
-      fetch('./creative-patches-v8-direct-base.js?v='+CACHE_VERSION,{cache:'no-store'}),
-      fetch('./creative-tracking-patch.js?v='+CACHE_VERSION,{cache:'no-store'}),
-      fetch('./creative-backfill-upload.js?v='+CACHE_VERSION,{cache:'no-store'})
-    ]);
-    const responses=[runtimeRes,patchRes,patchV3Res,patchV4Res,patchV5Res,patchV8Res,trackingRes,backfillRes];
-    const names=['runtime','v2','v3','v4','v5','v8','tracking','backfill'];
-    const bad=responses.findIndex(r=>!r.ok);
-    if(bad>=0){fail('fetch '+names[bad],new Error('HTTP '+responses[bad].status));return}
-    let src=await runtimeRes.text();
+    const runtimeRes=await fetch('./runtime-vnext.html?v='+VERSION,{cache:'no-store'});
+    if(!runtimeRes.ok)throw new Error('runtime HTTP '+runtimeRes.status);
+    let runtime=await runtimeRes.text();
 
-    const oldBg='https://raw.githubusercontent.com/Kaityo1221/campsite-design-tool-adv-lab/main/creative/runtime/assets/creative-mode-opening.png';
-    const fixedBg='https://raw.githubusercontent.com/Kaityo1221/campsite-design-tool-adv-lab/1c27ca3ef14f423688f755d350ecc602bee1c573/creative/runtime/assets/creative-mode-opening.png';
-    const baseLoadNeedle='let html=await res.text();';
-    if(src.includes(baseLoadNeedle))src=src.replace(baseLoadNeedle,baseLoadNeedle+`\n  html=html.replace(${JSON.stringify(oldBg)},${JSON.stringify(fixedBg)});`);
+    const writeNeedle='document.open();document.write(html);document.close();';
+    if(!runtime.includes(writeNeedle))throw new Error('runtime write target not found');
 
-    try{
-      Function(await patchRes.text())();
-      Function(await patchV3Res.text())();
-      Function(await patchV4Res.text())();
-      Function(await patchV5Res.text())();
-      Function(await patchV8Res.text())();
-      Function(await trackingRes.text())();
-      Function(await backfillRes.text())();
-    }catch(e){fail('patch init',e);return}
-
-    if(typeof window.applyCreativePatches!=='function'||typeof window.applyCreativeTrackingPatch!=='function'||typeof window.applyCreativeBackfillUpload!=='function'){
-      fail('patch registration',new Error('必要なパッチ関数が見つかりません'));return;
+    const directPatch=`
+  try{
+    const patchUrls=[
+      './creative-patches-v2.js?v=${VERSION}',
+      './creative-patches-v3.js?v=${VERSION}',
+      './creative-patches-v4.js?v=${VERSION}',
+      './creative-patches-v5-design-check.js?v=${VERSION}',
+      './creative-patches-v6-intuitive.js?v=${VERSION}'
+    ];
+    window.applyCreativePatches=s=>s;
+    for(const url of patchUrls){
+      const r=await fetch(url,{cache:'no-store'});
+      if(!r.ok)throw new Error(url+' HTTP '+r.status);
+      Function(await r.text())();
+      if(typeof window.applyCreativePatches!=='function')throw new Error(url+' registration failed');
     }
+    html=window.applyCreativePatches(html);
+  }catch(e){
+    document.body.style.cssText='margin:0;padding:24px;background:#17130f;color:#ffd0c8;font-family:-apple-system,BlinkMacSystemFont,sans-serif;white-space:pre-wrap';
+    document.body.textContent='CREATIVE MODE 読み込みエラー\\n\\n段階: final base patch\\n'+(e&&e.stack?e.stack:(e&&e.message?e.message:String(e||'')));
+    return;
+  }
+  ${writeNeedle}`;
 
-    try{
-      src=window.applyCreativePatches(src);
-      src=window.applyCreativeTrackingPatch(src);
-      src=window.applyCreativeBackfillUpload(src);
-    }catch(e){fail('runtime transform',e);return}
-
-    const runtimeWriteNeedle='document.open();document.write(html);document.close();';
-    const legacyLayerPatch=`const legacyInferNeedle="function inferLayer(pm,f,n){const explicit=explicitLayer(pm);if(explicit)return explicit;const exact=layerByLabel.get(String(f||'').trim());if(exact)return exact;const style=(child(pm,'styleUrl')||'').replace(/^#/,'');if(style.startsWith('creative-')){const styled=style.slice('creative-'.length);if(layerKeys.has(styled))return styled}const h=(f+' '+n).toLowerCase(),fresh=/追加|新規|候補|add|new|planned/.test(h);if(/gym|ジム/.test(h))return fresh?'new-gym':'existing-gym';if(/power|パワー/.test(h))return fresh?'new-power':'existing-power';return fresh?'new-pokestop':'existing-pokestop'}";const legacyInferReplacement="function legacyGameEntity(pm){for(const data of pm.getElementsByTagNameNS('*','Data')){const key=String(data.getAttribute('name')||'').replace(/^\\uFEFF/,'').trim().toLowerCase();if(key!=='gameentity')continue;const value=[...data.children].find(x=>x.localName==='value')?.textContent?.trim()||data.textContent?.trim()||'';return String(value).trim().toUpperCase()}return''}function inferLayer(pm,f,n){const explicit=explicitLayer(pm);if(explicit)return explicit;const exact=layerByLabel.get(String(f||'').trim());if(exact)return exact;const style=(child(pm,'styleUrl')||'').replace(/^#/,'');if(style.startsWith('creative-')){const styled=style.slice('creative-'.length);if(layerKeys.has(styled))return styled}const h=(f+' '+n).toLowerCase(),fresh=/追加|新規|候補|add|new|planned/.test(h),entity=legacyGameEntity(pm);if(entity==='GYM')return fresh?'new-gym':'existing-gym';if(entity==='POWERSPOT'||entity==='POWER_SPOT'||entity==='POWER SPOT')return fresh?'new-power':'existing-power';if(entity==='POKESTOP'||entity==='POKÉSTOP'||entity==='POKE_STOP')return fresh?'new-pokestop':'existing-pokestop';if(/gym|ジム/.test(h))return fresh?'new-gym':'existing-gym';if(/power|パワー/.test(h))return fresh?'new-power':'existing-power';return fresh?'new-pokestop':'existing-pokestop'}";if(html.includes(legacyInferNeedle))html=html.replace(legacyInferNeedle,legacyInferReplacement);`;
-    if(src.includes(runtimeWriteNeedle))src=src.replace(runtimeWriteNeedle,legacyLayerPatch+runtimeWriteNeedle);
-
-    document.open();document.write(src);document.close();
+    runtime=runtime.replace(writeNeedle,directPatch);
+    document.open();document.write(runtime);document.close();
   }catch(e){fail('bootstrap',e)}
 })();
 </script>
