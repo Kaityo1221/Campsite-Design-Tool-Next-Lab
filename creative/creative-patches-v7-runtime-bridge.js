@@ -15,7 +15,10 @@
     src=src.slice(0,a)+src.slice(end);
     const writeNeedle='document.open();document.write(html);document.close();';
     if(!src.includes(writeNeedle))return src;
-    const runtimeBridge=`const creativeIntuitiveUx=${JSON.stringify(block)};const creativeBaseEnd='})();\\n</script>';if(html.includes(creativeBaseEnd))html=html.replace(creativeBaseEnd,creativeIntuitiveUx+'\\n})();\\n</script>');else console.warn('Creative intuitive UX injection target missing');`;
+    // IMPORTANT: never emit a literal </script> inside the generated runtime <script>.
+    // HTML parsers terminate a script element even when that sequence appears in a JS string.
+    // Emit <\/script> in the runtime source; JavaScript then evaluates it as </script> at execution time.
+    const runtimeBridge=`const creativeIntuitiveUx=${JSON.stringify(block)};const creativeBaseEnd='})();\\n<\\/script>';if(html.includes(creativeBaseEnd))html=html.replace(creativeBaseEnd,creativeIntuitiveUx+'\\n})();\\n<\\/script>');else console.warn('Creative intuitive UX injection target missing');`;
     return src.replace(writeNeedle,runtimeBridge+writeNeedle);
   };
 })();
