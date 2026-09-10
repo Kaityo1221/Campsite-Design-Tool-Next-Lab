@@ -15,10 +15,14 @@
     src=src.slice(0,a)+src.slice(end);
     const writeNeedle='document.open();document.write(html);document.close();';
     if(!src.includes(writeNeedle))return src;
-    // IMPORTANT: never emit a literal </script> inside the generated runtime <script>.
-    // HTML parsers terminate a script element even when that sequence appears in a JS string.
-    // Emit <\/script> in the runtime source; JavaScript then evaluates it as </script> at execution time.
-    const runtimeBridge=`const creativeIntuitiveUx=${JSON.stringify(block)};const creativeBaseEnd='})();\\n<\\/script>';if(html.includes(creativeBaseEnd))html=html.replace(creativeBaseEnd,creativeIntuitiveUx+'\\n})();\\n<\\/script>');else console.warn('Creative intuitive UX injection target missing');`;
+
+    // Safari/HTML parser safety:
+    // The v6 block itself contains strings such as </script>. If JSON.stringify(block) is
+    // embedded verbatim into the runtime <script>, HTML parsing terminates early even though
+    // the sequence is inside a JavaScript string. Encode every '<' before embedding so the
+    // generated runtime source never contains a raw closing-script sequence.
+    const safeBlockJson=JSON.stringify(block).replace(/</g,'\\u003c');
+    const runtimeBridge=`const creativeIntuitiveUx=${safeBlockJson};const creativeBaseEnd='})();\\n<\\/script>';if(html.includes(creativeBaseEnd))html=html.replace(creativeBaseEnd,creativeIntuitiveUx+'\\n})();\\n<\\/script>');else console.warn('Creative intuitive UX injection target missing');`;
     return src.replace(writeNeedle,runtimeBridge+writeNeedle);
   };
 })();
