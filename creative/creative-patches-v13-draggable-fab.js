@@ -11,10 +11,19 @@
     const helper=`
 const CM_FAB_POS='next-lab-creative-fab-position-v1';
 function cmClampFabPosition(x,y){
-  const w=56,h=56;
-  const minX=58,maxX=Math.max(minX,window.innerWidth-w-58);
-  const minY=88,maxY=Math.max(minY,window.innerHeight-h-118);
-  return{x:Math.max(minX,Math.min(Number(x)||minX,maxX)),y:Math.max(minY,Math.min(Number(y)||minY,maxY))};
+  const w=56,h=56,edge=8;
+  const mapRect=document.getElementById('map')?.getBoundingClientRect();
+  const bottomBar=document.querySelector('.bottom-bar')?.getBoundingClientRect();
+  const minX=edge;
+  const maxX=Math.max(minX,window.innerWidth-w-edge);
+  const minY=Math.max(edge,mapRect?.top??edge);
+  const usableBottom=Math.min(window.innerHeight,bottomBar?.top??window.innerHeight);
+  const maxY=Math.max(minY,usableBottom-h-edge);
+  const nx=Number(x),ny=Number(y);
+  return{
+    x:Math.max(minX,Math.min(Number.isFinite(nx)?nx:minX,maxX)),
+    y:Math.max(minY,Math.min(Number.isFinite(ny)?ny:minY,maxY))
+  };
 }
 function cmApplyFabPosition(pos){
   const wrap=document.getElementById('cmFabWrap');
