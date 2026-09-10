@@ -11,7 +11,7 @@
 <div id="boot" class="boot"><div><strong>CREATIVE MODE</strong><small>読み込み中…</small></div></div>
 <script>
 (async()=>{
-  const VERSION='20260910-11';
+  const VERSION='20260910-12';
   const boot=document.getElementById('boot');
   const fail=(stage,e)=>{
     boot.innerHTML='';
@@ -46,9 +46,12 @@
       if(typeof window.applyCreativePatches!=='function')throw new Error(url+' registration failed');
     }
     html=window.applyCreativePatches(html);
-    // iOS Safari/Chrome: do not filter the picker by accept. KMZ can otherwise appear disabled.
-    // Validate CSV/KMZ after selection using the existing filename/MIME checks instead.
-    html=html.replace(/(<input id="entryFile" type="file"[^>]*?)\s+accept="[^"]*"([^>]*>)/i,'$1$2');
+
+    // iOS Safari/Chrome: never restrict the file picker with accept.
+    // 1) Remove accept from the final input markup regardless of attribute order/quoting.
+    html=html.replace(/<input\\b[^>]*\\bid=[\"']entryFile[\"'][^>]*>/i,m=>m.replace(/\\saccept\\s*=\\s*(?:\"[^\"]*\"|'[^']*'|[^\\s>]+)/i,''));
+    // 2) Also clear it at runtime before the change handler is attached, so WebKit sees no filter on tap.
+    html=html.replace('entryFile.onchange=()=>{',\"entryFile.removeAttribute('accept');entryFile.accept='';entryFile.onchange=()=>{\");
   }catch(e){
     document.body.style.cssText='margin:0;padding:24px;background:#17130f;color:#ffd0c8;font-family:-apple-system,BlinkMacSystemFont,sans-serif;white-space:pre-wrap';
     document.body.textContent='CREATIVE MODE 読み込みエラー\\n\\n段階: final base patch\\n'+(e&&e.stack?e.stack:(e&&e.message?e.message:String(e||'')));
