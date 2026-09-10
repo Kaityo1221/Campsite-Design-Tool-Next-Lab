@@ -8,7 +8,7 @@
     // Reset the validation default once so the new initial position is visible.
     src=src.replace("const CM_FAB_POS='next-lab-creative-fab-position-v1';","const CM_FAB_POS='next-lab-creative-fab-position-v2';");
 
-    // Default + position: directly below the Layer button. Dragged positions still persist.
+    // Default + position: below the Layer button with enough room for the three bubbles to open upward.
     src=src.replace(
       "const saved=cmReadFabPosition();\n  if(saved)cmApplyFabPosition(saved);",
       `const saved=cmReadFabPosition();
@@ -18,7 +18,7 @@
       const layerBtn=document.getElementById('layerButton');
       if(!layerBtn)return;
       const r=layerBtn.getBoundingClientRect();
-      cmApplyFabPosition({x:r.left+(r.width-56)/2,y:r.bottom+10});
+      cmApplyFabPosition({x:r.left+(r.width-56)/2,y:r.bottom+88});
     });
   };
   if(saved)cmApplyFabPosition(saved);else applyDefault();
