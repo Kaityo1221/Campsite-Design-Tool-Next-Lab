@@ -11,7 +11,7 @@
 <div id="boot" class="boot"><div><strong>CREATIVE MODE</strong><small>読み込み中…</small></div></div>
 <script>
 (async()=>{
-  const VERSION='20260910-18';
+  const VERSION='20260910-19';
   const boot=document.getElementById('boot');
   const fail=(stage,e)=>{
     boot.innerHTML='';
@@ -39,7 +39,8 @@
       './creative-patches-v10-save-labels.js?v=${VERSION}',
       './creative-patches-v13-draggable-fab.js?v=${VERSION}',
       './creative-patches-v14-layer-tap-layout.js?v=${VERSION}',
-      './creative-patches-v18-preview-crosshair.js?v=${VERSION}'
+      './creative-patches-v18-preview-crosshair.js?v=${VERSION}',
+      './creative-patches-v19-persistent-crosshair.js?v=${VERSION}'
     ];
     window.applyCreativePatches=s=>s;
     for(const url of patchUrls){
@@ -51,7 +52,7 @@
     html=window.applyCreativePatches(html);
 
     html=html.replace(/<input\\b[^>]*\\bid=[\"']entryFile[\"'][^>]*>/i,m=>m.replace(/\\saccept\\s*=\\s*(?:\"[^\"]*\"|'[^']*'|[^\\s>]+)/i,''));
-    html=html.replace('entryFile.onchange=()=>{',\"entryFile.removeAttribute('accept');entryFile.accept='';entryFile.onchange=()=>{\");
+    html=html.replace('entryFile.onchange=()=>{',"entryFile.removeAttribute('accept');entryFile.accept='';entryFile.onchange=()=>{");
   }catch(e){
     document.body.style.cssText='margin:0;padding:24px;background:#17130f;color:#ffd0c8;font-family:-apple-system,BlinkMacSystemFont,sans-serif;white-space:pre-wrap';
     document.body.textContent='CREATIVE MODE 読み込みエラー\\n\\n段階: final base patch\\n'+(e&&e.stack?e.stack:(e&&e.message?e.message:String(e||'')));
