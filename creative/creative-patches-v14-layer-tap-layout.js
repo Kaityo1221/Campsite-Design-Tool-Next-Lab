@@ -6,19 +6,21 @@
     src=previous(src);
 
     // Reset the validation default once so the new initial position is visible.
-    src=src.replace("const CM_FAB_POS='next-lab-creative-fab-position-v1';","const CM_FAB_POS='next-lab-creative-fab-position-v2';");
+    src=src.replace("const CM_FAB_POS='next-lab-creative-fab-position-v1';","const CM_FAB_POS='next-lab-creative-fab-position-v3';");
 
-    // Default + position: below the Layer button with enough room for the three bubbles to open upward.
+    // Default + position: lower right area above the bottom bar, between Save and Toolbox.
+    // Mirror the position for left-handed mode. Dragged positions still persist.
     src=src.replace(
       "const saved=cmReadFabPosition();\n  if(saved)cmApplyFabPosition(saved);",
       `const saved=cmReadFabPosition();
   const applyDefault=()=>{
     if(cmReadFabPosition())return;
     requestAnimationFrame(()=>{
-      const layerBtn=document.getElementById('layerButton');
-      if(!layerBtn)return;
-      const r=layerBtn.getBoundingClientRect();
-      cmApplyFabPosition({x:r.left+(r.width-56)/2,y:r.bottom+88});
+      const leftHand=document.body.classList.contains('left-hand');
+      const bottomBar=document.querySelector('.bottom-bar');
+      const bottomTop=bottomBar?.getBoundingClientRect().top||window.innerHeight-110;
+      const centerX=window.innerWidth*(leftHand?0.30:0.70);
+      cmApplyFabPosition({x:centerX-28,y:bottomTop-110});
     });
   };
   if(saved)cmApplyFabPosition(saved);else applyDefault();
