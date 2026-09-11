@@ -30,6 +30,9 @@ function cmToggleCircleLayer(radius){
   renderRecordCircles();snapshot();renderLayerPanel();
   msg((cmCircleLayerEnabled(radius)?'表示：':'非表示：')+radius+'m円',1000);
 }
+function cmIsCircleDummyRecord(r){
+  return /レイヤー保持用のダミーポイント/.test(String(r?.memo||''));
+}
 `;
       src=src.replace(parseMarker,helper+parseMarker);
     }
@@ -37,6 +40,26 @@ function cmToggleCircleLayer(radius){
     src=src.replace(
       "function parse(kml){records=[];polygons=[];const doc=new DOMParser().parseFromString(kml,'application/xml'),bounds=[];",
       "function parse(kml){records=[];polygons=[];circleExtras=[];const doc=new DOMParser().parseFromString(kml,'application/xml'),bounds=[];cmReadImportedCircleLayers(doc);"
+    );
+
+    // v6 intentionally disabled record circles. Restore them here so imported circle layers actually draw.
+    src=src.replace(
+      'renderRecordCircles=function(){recordCircleGroup.clearLayers()};',
+      `renderRecordCircles=function(){
+  recordCircleGroup.clearLayers();
+  if(!map.hasLayer(recordCircleGroup))recordCircleGroup.addTo(map);
+  records.forEach(r=>{
+    if(!r||r.deleted||cmIsCircleDummyRecord(r)||!map.hasLayer(groups[r.layer]))return;
+    L.circle(r.latlng,circleOpts(50)).addTo(recordCircleGroup);
+    circleExtras.forEach(radius=>L.circle(r.latlng,circleOpts(radius)).addTo(recordCircleGroup));
+  });
+};`
+    );
+
+    // Fallback for builds where the v6 override is absent: make the base renderer equally safe.
+    src=src.replace(
+      "function renderRecordCircles(){recordCircleGroup.clearLayers();records.forEach(r=>{if(r.deleted||!map.hasLayer(groups[r.layer]))return;L.circle(r.latlng,circleOpts(50)).addTo(recordCircleGroup);circleExtras.forEach(radius=>L.circle(r.latlng,circleOpts(radius)).addTo(recordCircleGroup))})}",
+      "function renderRecordCircles(){recordCircleGroup.clearLayers();if(!map.hasLayer(recordCircleGroup))recordCircleGroup.addTo(map);records.forEach(r=>{if(!r||r.deleted||cmIsCircleDummyRecord(r)||!map.hasLayer(groups[r.layer]))return;L.circle(r.latlng,circleOpts(50)).addTo(recordCircleGroup);circleExtras.forEach(radius=>L.circle(r.latlng,circleOpts(radius)).addTo(recordCircleGroup))})}"
     );
 
     // Extend the tap-style layer menu with circle layers while preserving the existing POI/polygon behavior.
