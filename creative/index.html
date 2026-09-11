@@ -8,9 +8,14 @@
 </head>
 <body>
 <script>
+function showCreativeLoadError(error){
+  const text=error&&error.stack?error.stack:(error&&error.message?error.message:String(error||'不明なエラー'));
+  document.body.style.cssText='margin:0;padding:24px;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#8c2f28;white-space:pre-wrap';
+  document.body.textContent='CREATIVE MODE 読み込みエラー\n\n'+text;
+}
 (async()=>{
-  const CACHE_VERSION='20260911-01';
-  const [runtimeRes,patchRes,patchV3Res,patchV4Res,patchV5Res,patchV6Res,trackingRes,backfillRes]=await Promise.all([
+  const CACHE_VERSION='20260911-02';
+  const [runtimeRes,patchRes,patchV3Res,patchV4Res,patchV5Res,patchV6Res,trackingRes,backfillRes,selectedRes]=await Promise.all([
     fetch('./runtime-vnext.html?v='+CACHE_VERSION,{cache:'no-store'}),
     fetch('./creative-patches-v2.js?v='+CACHE_VERSION,{cache:'no-store'}),
     fetch('./creative-patches-v3.js?v='+CACHE_VERSION,{cache:'no-store'}),
@@ -18,9 +23,22 @@
     fetch('./creative-patches-v5-design-check.js?v='+CACHE_VERSION,{cache:'no-store'}),
     fetch('./creative-patches-v6-bottom-fit.js?v='+CACHE_VERSION,{cache:'no-store'}),
     fetch('./creative-tracking-patch.js?v='+CACHE_VERSION,{cache:'no-store'}),
-    fetch('./creative-backfill-upload.js?v='+CACHE_VERSION,{cache:'no-store'})
+    fetch('./creative-backfill-upload.js?v='+CACHE_VERSION,{cache:'no-store'}),
+    fetch('./creative-selected-features.js?v='+CACHE_VERSION,{cache:'no-store'})
   ]);
-  if(!runtimeRes.ok||!patchRes.ok||!patchV3Res.ok||!patchV4Res.ok||!patchV5Res.ok||!patchV6Res.ok||!trackingRes.ok||!backfillRes.ok){document.body.textContent='Creative Modeの読み込みに失敗しました。';return;}
+  const resources=[
+    ['runtime-vnext.html',runtimeRes],
+    ['creative-patches-v2.js',patchRes],
+    ['creative-patches-v3.js',patchV3Res],
+    ['creative-patches-v4.js',patchV4Res],
+    ['creative-patches-v5-design-check.js',patchV5Res],
+    ['creative-patches-v6-bottom-fit.js',patchV6Res],
+    ['creative-tracking-patch.js',trackingRes],
+    ['creative-backfill-upload.js',backfillRes],
+    ['creative-selected-features.js',selectedRes]
+  ];
+  const failed=resources.find(([,res])=>!res.ok);
+  if(failed){throw Error(failed[0]+' の取得に失敗しました ('+failed[1].status+')')}
   let src=await runtimeRes.text();
 
   // runtime-vnext が base-v7.html を読み込んだ直後に、削除済み旧main参照を固定コミットへ差し替える。
@@ -38,11 +56,19 @@
   Function(await patchV6Res.text())();
   Function(await trackingRes.text())();
   Function(await backfillRes.text())();
-  if(typeof window.applyCreativePatches!=='function'||typeof window.applyCreativeBottomBarFitPatch!=='function'||typeof window.applyCreativeTrackingPatch!=='function'||typeof window.applyCreativeBackfillUpload!=='function'){document.body.textContent='Creative Modeの拡張機能を読み込めませんでした。';return;}
+  Function(await selectedRes.text())();
+  if(typeof window.applyCreativePatches!=='function'||
+     typeof window.applyCreativeBottomBarFitPatch!=='function'||
+     typeof window.applyCreativeTrackingPatch!=='function'||
+     typeof window.applyCreativeBackfillUpload!=='function'||
+     typeof window.applyCreativeSelectedFeaturesPatch!=='function'){
+    throw Error('Creative Modeの拡張機能を初期化できませんでした');
+  }
   src=window.applyCreativePatches(src);
   src=window.applyCreativeBottomBarFitPatch(src);
   src=window.applyCreativeTrackingPatch(src);
   src=window.applyCreativeBackfillUpload(src);
+  src=window.applyCreativeSelectedFeaturesPatch(src);
 
   // iPhoneのファイルピッカーではKMZがZIP系MIMEとして扱われる場合があり、accept指定で選択不能になる。
   // 選択後はCreative Mode側でCSV/KMZを厳密判定するため、入口のaccept制限だけ外す。
@@ -57,7 +83,7 @@ if(html.includes(legacyInferNeedle))html=html.replace(legacyInferNeedle,legacyIn
   if(src.includes(runtimeWriteNeedle))src=src.replace(runtimeWriteNeedle,legacyLayerPatch+runtimeWriteNeedle);
 
   document.open();document.write(src);document.close();
-})().catch(()=>{document.body.textContent='Creative Modeの読み込みに失敗しました。';});
+})().catch(showCreativeLoadError);
 </script>
 </body>
 </html>
