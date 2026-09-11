@@ -5,13 +5,13 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover,user-scalable=no">
 <meta name="robots" content="noindex,nofollow,noarchive">
 <title>CREATIVE MODE | Next Lab</title>
-<style>html,body{margin:0;width:100%;height:100%;background:#17130f;color:#fff8e8;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.boot{min-height:100%;display:grid;place-items:center;padding:24px;box-sizing:border-box;text-align:center}.boot small{display:block;margin-top:8px;opacity:.7}.error{white-space:pre-wrap;text-align:left;color:#ffd0c8;background:#3b1713;border:1px solid #87453d;border-radius:16px;padding:16px;max-width:720px;width:100%;box-sizing:border-box}</style>
+<style>html,body{margin:0;width:100%;height:100%;background:#17130f;color:#fff8e8;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.boot{min-height:100%;display:grid;place-items:center;padding:24px;box-sizing:border-box;text-align:center;background:#17130f}.boot strong{font-size:22px;letter-spacing:.06em}.boot small{display:block;margin-top:8px;opacity:.7}.boot-spinner{width:28px;height:28px;margin:18px auto 0;border:3px solid rgba(255,248,232,.22);border-top-color:#f3d77f;border-radius:50%;animation:bootSpin .85s linear infinite}@keyframes bootSpin{to{transform:rotate(360deg)}}.error{white-space:pre-wrap;text-align:left;color:#ffd0c8;background:#3b1713;border:1px solid #87453d;border-radius:16px;padding:16px;max-width:720px;width:100%;box-sizing:border-box}</style>
 </head>
 <body>
-<div id="boot" class="boot"><div><strong>CREATIVE MODE</strong><small>読み込み中…</small></div></div>
+<div id="boot" class="boot"><div><strong>CREATIVE MODE</strong><small>読み込み中…</small><div class="boot-spinner"></div></div></div>
 <script>
 (async()=>{
-  const VERSION='20260911-main39';
+  const VERSION='20260911-main40';
   const boot=document.getElementById('boot');
   const fail=(stage,e)=>{
     boot.innerHTML='';
@@ -24,11 +24,16 @@
     if(!runtimeRes.ok)throw new Error('runtime HTTP '+runtimeRes.status);
     let runtime=await runtimeRes.text();
 
+    const runtimeBoot='<body style="margin:0;background:#17130f;color:#fff8e8;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif"><div id="creativeRuntimeBoot" style="position:fixed;inset:0;z-index:99999;display:grid;place-items:center;background:#17130f;text-align:center"><div><strong style="font-size:22px;letter-spacing:.06em">CREATIVE MODE</strong><small id="creativeRuntimeBootText" style="display:block;margin-top:8px;opacity:.7">地図を準備中…</small><span style="display:block;width:28px;height:28px;margin:18px auto 0;border:3px solid rgba(255,248,232,.22);border-top-color:#f3d77f;border-radius:50%;animation:cmBootSpin .85s linear infinite"></span></div></div><style>@keyframes cmBootSpin{to{transform:rotate(360deg)}}</style><script>';
+    runtime=runtime.replace('<body><script>',runtimeBoot);
+
     const writeNeedle='document.open();document.write(html);document.close();';
     if(!runtime.includes(writeNeedle))throw new Error('runtime write target not found');
 
     const directPatch=`
   try{
+    const bootText=document.getElementById('creativeRuntimeBootText');
+    if(bootText)bootText.textContent='機能を準備中…';
     const patchUrls=[
       './creative-patches-v2.js?v=${VERSION}',
       './creative-patches-v3.js?v=${VERSION}',
@@ -56,12 +61,15 @@
       './creative-patches-v34-placement-core.js?v=${VERSION}',
       './creative-patches-v35-nearest-poi-warning.js?v=${VERSION}'
     ];
-    window.applyCreativePatches=s=>s;
-    for(const url of patchUrls){
-      const r=await fetch(url,{cache:'no-store'});
+    const patchTexts=await Promise.all(patchUrls.map(async url=>{
+      const r=await fetch(url,{cache:'force-cache'});
       if(!r.ok)throw new Error(url+' HTTP '+r.status);
-      Function(await r.text())();
-      if(typeof window.applyCreativePatches!=='function')throw new Error(url+' registration failed');
+      return r.text();
+    }));
+    window.applyCreativePatches=s=>s;
+    for(let i=0;i<patchTexts.length;i++){
+      Function(await patchTexts[i])();
+      if(typeof window.applyCreativePatches!=='function')throw new Error(patchUrls[i]+' registration failed');
     }
     html=window.applyCreativePatches(html);
 
