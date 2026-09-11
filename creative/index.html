@@ -5,14 +5,32 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover,user-scalable=no">
   <meta name="robots" content="noindex,nofollow,noarchive">
   <title>CREATIVE MODE | Next Lab</title>
-  <meta http-equiv="refresh" content="0; url=./base-v7.html?v=20260911-direct">
   <style>
     html,body{margin:0;width:100%;height:100%;background:#17130f;color:#fff8e8;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
     body{display:grid;place-items:center;text-align:center;padding:24px;box-sizing:border-box}
-    a{color:#f0cc7b;font-weight:900}
+    .boot small{display:block;margin-top:10px;opacity:.72}.error{max-width:680px;text-align:left;white-space:pre-wrap;color:#ffd0c8;background:#3b1713;border:1px solid #87453d;border-radius:16px;padding:16px}
   </style>
 </head>
 <body>
-  <div>CREATIVE MODE を起動しています。<br><br><a href="./base-v7.html?v=20260911-direct">開かない場合はこちら</a></div>
+  <div id="boot" class="boot"><strong>CREATIVE MODE</strong><small>読み込み中…</small></div>
+  <script>
+  (async()=>{
+    const boot=document.getElementById('boot');
+    try{
+      const res=await fetch('./base-v7.html?v=20260911-bgfix1',{cache:'no-store'});
+      if(!res.ok)throw new Error('base-v7.html HTTP '+res.status);
+      let html=await res.text();
+      const oldBg='https://raw.githubusercontent.com/Kaityo1221/campsite-design-tool-adv-lab/main/creative/runtime/assets/creative-mode-opening.png';
+      const fixedBg='https://raw.githubusercontent.com/Kaityo1221/campsite-design-tool-adv-lab/1c27ca3ef14f423688f755d350ecc602bee1c573/creative/runtime/assets/creative-mode-opening.png';
+      html=html.split(oldBg).join(fixedBg);
+      document.open();document.write(html);document.close();
+    }catch(e){
+      document.body.innerHTML='';
+      const box=document.createElement('div');box.className='error';
+      box.textContent='CREATIVE MODE 読み込みエラー\n\n'+(e&&e.message?e.message:String(e));
+      document.body.appendChild(box);
+    }
+  })();
+  </script>
 </body>
 </html>
