@@ -1,89 +1,18 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover,user-scalable=no">
-<meta name="robots" content="noindex,nofollow,noarchive">
-<title>CREATIVE MODE | Next Lab</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover,user-scalable=no">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <title>CREATIVE MODE | Next Lab</title>
+  <meta http-equiv="refresh" content="0; url=./base-v7.html?v=20260911-direct">
+  <style>
+    html,body{margin:0;width:100%;height:100%;background:#17130f;color:#fff8e8;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    body{display:grid;place-items:center;text-align:center;padding:24px;box-sizing:border-box}
+    a{color:#f0cc7b;font-weight:900}
+  </style>
 </head>
 <body>
-<script>
-function showCreativeLoadError(error){
-  const text=error&&error.stack?error.stack:(error&&error.message?error.message:String(error||'不明なエラー'));
-  document.body.style.cssText='margin:0;padding:24px;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#8c2f28;white-space:pre-wrap';
-  document.body.textContent='CREATIVE MODE 読み込みエラー\n\n'+text;
-}
-(async()=>{
-  const CACHE_VERSION='20260911-02';
-  const [runtimeRes,patchRes,patchV3Res,patchV4Res,patchV5Res,patchV6Res,trackingRes,backfillRes,selectedRes]=await Promise.all([
-    fetch('./runtime-vnext.html?v='+CACHE_VERSION,{cache:'no-store'}),
-    fetch('./creative-patches-v2.js?v='+CACHE_VERSION,{cache:'no-store'}),
-    fetch('./creative-patches-v3.js?v='+CACHE_VERSION,{cache:'no-store'}),
-    fetch('./creative-patches-v4.js?v='+CACHE_VERSION,{cache:'no-store'}),
-    fetch('./creative-patches-v5-design-check.js?v='+CACHE_VERSION,{cache:'no-store'}),
-    fetch('./creative-patches-v6-bottom-fit.js?v='+CACHE_VERSION,{cache:'no-store'}),
-    fetch('./creative-tracking-patch.js?v='+CACHE_VERSION,{cache:'no-store'}),
-    fetch('./creative-backfill-upload.js?v='+CACHE_VERSION,{cache:'no-store'}),
-    fetch('./creative-selected-features.js?v='+CACHE_VERSION,{cache:'no-store'})
-  ]);
-  const resources=[
-    ['runtime-vnext.html',runtimeRes],
-    ['creative-patches-v2.js',patchRes],
-    ['creative-patches-v3.js',patchV3Res],
-    ['creative-patches-v4.js',patchV4Res],
-    ['creative-patches-v5-design-check.js',patchV5Res],
-    ['creative-patches-v6-bottom-fit.js',patchV6Res],
-    ['creative-tracking-patch.js',trackingRes],
-    ['creative-backfill-upload.js',backfillRes],
-    ['creative-selected-features.js',selectedRes]
-  ];
-  const failed=resources.find(([,res])=>!res.ok);
-  if(failed){throw Error(failed[0]+' の取得に失敗しました ('+failed[1].status+')')}
-  let src=await runtimeRes.text();
-
-  // runtime-vnext が base-v7.html を読み込んだ直後に、削除済み旧main参照を固定コミットへ差し替える。
-  const oldBg='https://raw.githubusercontent.com/Kaityo1221/campsite-design-tool-adv-lab/main/creative/runtime/assets/creative-mode-opening.png';
-  const fixedBg='https://raw.githubusercontent.com/Kaityo1221/campsite-design-tool-adv-lab/1c27ca3ef14f423688f755d350ecc602bee1c573/creative/runtime/assets/creative-mode-opening.png';
-  const baseLoadNeedle='let html=await res.text();';
-  if(src.includes(baseLoadNeedle)){
-    src=src.replace(baseLoadNeedle,baseLoadNeedle+`\n  html=html.replace(${JSON.stringify(oldBg)},${JSON.stringify(fixedBg)});`);
-  }
-
-  Function(await patchRes.text())();
-  Function(await patchV3Res.text())();
-  Function(await patchV4Res.text())();
-  Function(await patchV5Res.text())();
-  Function(await patchV6Res.text())();
-  Function(await trackingRes.text())();
-  Function(await backfillRes.text())();
-  Function(await selectedRes.text())();
-  if(typeof window.applyCreativePatches!=='function'||
-     typeof window.applyCreativeBottomBarFitPatch!=='function'||
-     typeof window.applyCreativeTrackingPatch!=='function'||
-     typeof window.applyCreativeBackfillUpload!=='function'||
-     typeof window.applyCreativeSelectedFeaturesPatch!=='function'){
-    throw Error('Creative Modeの拡張機能を初期化できませんでした');
-  }
-  src=window.applyCreativePatches(src);
-  src=window.applyCreativeBottomBarFitPatch(src);
-  src=window.applyCreativeTrackingPatch(src);
-  src=window.applyCreativeBackfillUpload(src);
-  src=window.applyCreativeSelectedFeaturesPatch(src);
-
-  // iPhoneのファイルピッカーではKMZがZIP系MIMEとして扱われる場合があり、accept指定で選択不能になる。
-  // 選択後はCreative Mode側でCSV/KMZを厳密判定するため、入口のaccept制限だけ外す。
-  src=src.replace(/multiple accept="[^"]*"/g,'multiple');
-
-  // 旧マニュアル互換：My Mapsへnearby-wayspots CSVを個別投入したKMZでも、
-  // ExtendedDataのgameEntity（POKESTOP / GYM / POWERSPOT）を優先して正式レイヤーへ振り分ける。
-  const runtimeWriteNeedle='document.open();document.write(html);document.close();';
-  const legacyLayerPatch=`const legacyInferNeedle="function inferLayer(pm,f,n){const explicit=explicitLayer(pm);if(explicit)return explicit;const exact=layerByLabel.get(String(f||'').trim());if(exact)return exact;const style=(child(pm,'styleUrl')||'').replace(/^#/,'');if(style.startsWith('creative-')){const styled=style.slice('creative-'.length);if(layerKeys.has(styled))return styled}const h=(f+' '+n).toLowerCase(),fresh=/追加|新規|候補|add|new|planned/.test(h);if(/gym|ジム/.test(h))return fresh?'new-gym':'existing-gym';if(/power|パワー/.test(h))return fresh?'new-power':'existing-power';return fresh?'new-pokestop':'existing-pokestop'}";
-const legacyInferReplacement="function legacyGameEntity(pm){for(const data of pm.getElementsByTagNameNS('*','Data')){const key=String(data.getAttribute('name')||'').replace(/^\\uFEFF/,'').trim().toLowerCase();if(key!=='gameentity')continue;const value=[...data.children].find(x=>x.localName==='value')?.textContent?.trim()||data.textContent?.trim()||'';return String(value).trim().toUpperCase()}return''}function inferLayer(pm,f,n){const explicit=explicitLayer(pm);if(explicit)return explicit;const exact=layerByLabel.get(String(f||'').trim());if(exact)return exact;const style=(child(pm,'styleUrl')||'').replace(/^#/,'');if(style.startsWith('creative-')){const styled=style.slice('creative-'.length);if(layerKeys.has(styled))return styled}const h=(f+' '+n).toLowerCase(),fresh=/追加|新規|候補|add|new|planned/.test(h),entity=legacyGameEntity(pm);if(entity==='GYM')return fresh?'new-gym':'existing-gym';if(entity==='POWERSPOT'||entity==='POWER_SPOT'||entity==='POWER SPOT')return fresh?'new-power':'existing-power';if(entity==='POKESTOP'||entity==='POKÉSTOP'||entity==='POKE_STOP')return fresh?'new-pokestop':'existing-pokestop';if(/gym|ジム/.test(h))return fresh?'new-gym':'existing-gym';if(/power|パワー/.test(h))return fresh?'new-power':'existing-power';return fresh?'new-pokestop':'existing-pokestop'}";
-if(html.includes(legacyInferNeedle))html=html.replace(legacyInferNeedle,legacyInferReplacement);`;
-  if(src.includes(runtimeWriteNeedle))src=src.replace(runtimeWriteNeedle,legacyLayerPatch+runtimeWriteNeedle);
-
-  document.open();document.write(src);document.close();
-})().catch(showCreativeLoadError);
-</script>
+  <div>CREATIVE MODE を起動しています。<br><br><a href="./base-v7.html?v=20260911-direct">開かない場合はこちら</a></div>
 </body>
 </html>
