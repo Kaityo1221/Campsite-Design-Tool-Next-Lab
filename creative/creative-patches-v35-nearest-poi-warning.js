@@ -19,10 +19,14 @@ function cmSafeEnsureNearestWarning(){
   return d;
 }
 function cmSafeUpdateNearestWarning(){
-  if(!cmAddMode)return;
+  if(!cmAddMode&&!cmMoveSession){
+    if(cmSafeNearestWarning)cmSafeNearestWarning.style.display='none';
+    return;
+  }
   const d=cmSafeEnsureNearestWarning();
   const c=map.getCenter();
-  const n=cmNearest([c.lat,c.lng]);
+  const excludeId=cmMoveSession?.r?.id;
+  const n=cmNearest([c.lat,c.lng],excludeId);
   if(!n||!Number.isFinite(Number(n.distance))){d.style.display='none';return}
   const m=Number(n.distance);
   d.style.display='block';
@@ -51,6 +55,21 @@ function cmSafeRemoveNearestWarning(){
     src=src.replace(
       "map.on('move',()=>{if(cmAddMode&&cmSafeAddCircle)cmSafeAddCircle.setLatLng(map.getCenter())});",
       "map.on('move',()=>{if(cmAddMode&&cmSafeAddCircle){cmSafeAddCircle.setLatLng(map.getCenter());cmSafeUpdateNearestWarning()}});"
+    );
+
+    src=src.replace(
+      'cmBindMoveLever();cmMoveSetRadius(50);',
+      'cmBindMoveLever();cmMoveSetRadius(50);cmSafeEnsureNearestWarning();cmSafeUpdateNearestWarning();'
+    );
+
+    src=src.replace(
+      'function cmRemoveMoveUi(){if(cmMoveUi?.isConnected)cmMoveUi.remove();cmMoveUi=null;cmMoveUnlockSurface()}',
+      'function cmRemoveMoveUi(){if(cmMoveUi?.isConnected)cmMoveUi.remove();cmMoveUi=null;cmSafeRemoveNearestWarning();cmMoveUnlockSurface()}'
+    );
+
+    src=src.replace(
+      "const onMapMove=()=>{if(cmMoveSession?.r===r)circle.setLatLng(map.getCenter())};",
+      "const onMapMove=()=>{if(cmMoveSession?.r===r){circle.setLatLng(map.getCenter());cmSafeUpdateNearestWarning()}};"
     );
 
     const style=`<style id="cmV35NearestPoiWarningStyle">
