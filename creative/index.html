@@ -11,7 +11,7 @@
 <div id="boot" class="boot"><div><strong>CREATIVE MODE</strong><small>読み込み中…</small></div></div>
 <script>
 (async()=>{
-  const VERSION='20260911-main32';
+  const VERSION='20260911-main33';
   const boot=document.getElementById('boot');
   const fail=(stage,e)=>{
     boot.innerHTML='';
@@ -51,7 +51,7 @@
       './creative-patches-v28-lever-handle.js?v=${VERSION}',
       './creative-patches-v29-lever-notches.js?v=${VERSION}',
       './creative-patches-v30-lever-gesture-lock.js?v=${VERSION}',
-      './creative-patches-v31-poi-move.js?v=${VERSION}'
+      './creative-patches-v32-poi-move-isolated.js?v=${VERSION}'
     ];
     window.applyCreativePatches=s=>s;
     for(const url of patchUrls){
