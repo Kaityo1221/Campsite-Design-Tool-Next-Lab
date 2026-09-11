@@ -162,6 +162,8 @@
       html,body{overscroll-behavior:none}
       #cmRadiusHandle{-webkit-touch-callout:none!important;-webkit-user-select:none!important;user-select:none!important;touch-action:none!important}
       #cmRadiusHandle *{pointer-events:none!important}
+      .cm-bubble{display:flex!important;align-items:center!important;justify-content:center!important;padding:0!important;line-height:0!important}
+      .cm-bubble img{display:block!important;margin:0!important;flex:none!important}
     </style>`;
     if(!src.includes('id="cmV30GestureLockStyle"'))src=src.replace('</head>',style+'</head>');
 
