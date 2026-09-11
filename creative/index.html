@@ -88,7 +88,7 @@
     html=html.replace('entryFile.onchange=()=>{',"entryFile.removeAttribute('accept');entryFile.accept='';entryFile.onchange=()=>{");
   }catch(e){
     document.body.style.cssText='margin:0;padding:24px;background:#17130f;color:#ffd0c8;font-family:-apple-system,BlinkMacSystemFont,sans-serif;white-space:pre-wrap';
-    document.body.textContent='CREATIVE MODE 読み込みエラー\n\n段階: final base patch\n'+(e&&e.stack?e.stack:(e&&e.message?e.message:String(e||'')));
+    document.body.textContent='CREATIVE MODE 読み込みエラー'+String.fromCharCode(10,10)+'段階: final base patch'+String.fromCharCode(10)+(e&&e.stack?e.stack:(e&&e.message?e.message:String(e||'')));
     return;
   }
   ${writeNeedle}`;
