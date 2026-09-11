@@ -11,7 +11,9 @@
     main{max-width:720px;margin:0 auto;padding:calc(28px + env(safe-area-inset-top)) 20px 40px}
     .badge{display:inline-block;padding:6px 10px;border:1px solid #b58a3d;border-radius:999px;color:#f0cc7b;font-size:12px;font-weight:800;letter-spacing:.08em}
     h1{margin:18px 0 8px;font-size:30px}p{color:#d7cbb8;line-height:1.7}.grid{display:grid;gap:12px;margin-top:26px}
-    .card{display:block;padding:18px;border:1px solid #514638;border-radius:16px;background:#241f18;color:inherit;text-decoration:none}.card strong{display:block;font-size:18px;margin-bottom:6px}.card span{font-size:13px;color:#bfb29e;line-height:1.5}.card.live{border-color:#b58a3d;background:#2c2419}.card.live strong:after{content:'  OPEN';font-size:10px;color:#f0cc7b;letter-spacing:.08em}
+    .card{display:block;padding:18px;border:1px solid #514638;border-radius:16px;background:#241f18;color:inherit;text-decoration:none;position:relative}.card strong{display:block;font-size:18px;margin-bottom:6px}.card span{font-size:13px;color:#bfb29e;line-height:1.5}.card.live{border-color:#b58a3d;background:#2c2419}.card.live strong:after{content:'  OPEN';font-size:10px;color:#f0cc7b;letter-spacing:.08em}
+    .card.field{border-color:#547c65;background:linear-gradient(145deg,#1f2a22,#18231c);box-shadow:inset 0 0 26px rgba(90,154,112,.04)}
+    .card.field strong{padding-right:96px}.card.field strong:after{content:''}.card.field .soon{position:absolute;top:16px;right:16px;padding:4px 8px;border:1px solid rgba(154,208,173,.48);border-radius:999px;color:#9ad0ad;font-size:9px;font-weight:900;letter-spacing:.09em;line-height:1}.card.field .dev{display:block;margin-top:10px;color:#9ad0ad;font-size:11px;font-weight:900;letter-spacing:.04em}.card.field.disabled{cursor:default;user-select:none;-webkit-user-select:none}
     footer{margin-top:30px;font-size:12px;color:#8f8373}
   </style>
 </head>
@@ -19,9 +21,15 @@
 <main>
   <span class="badge">NEXT LAB / DEVELOPMENT</span>
   <h1>Campsite Design Tool Next Lab</h1>
-  <p>CREATIVE MODE の検証・レビュー用ページです。本番環境とは独立しています。</p>
+  <p>CREATIVE MODE / FIELD MODE の検証・レビュー用ページです。本番環境とは独立しています。</p>
   <div class="grid">
     <a class="card live" href="creative/index.html"><strong>CREATIVE MODE</strong><span>家・遠隔地で候補配置、比較、編集、KMZ作成を行う創作モード</span></a>
+    <div class="card field disabled" aria-disabled="true">
+      <span class="soon">COMING SOON</span>
+      <strong>FIELD MODE</strong>
+      <span>現在地から周辺を探索し、キャンプサイト候補を発見する現地モード</span>
+      <span class="dev">現在開発中です</span>
+    </div>
   </div>
   <footer>Development only. Do not use as production.</footer>
 </main>
