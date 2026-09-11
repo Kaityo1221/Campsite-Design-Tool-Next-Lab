@@ -28,11 +28,7 @@ function cmSafeUpdateNearestWarning(){
   d.style.display='block';
   d.classList.toggle('danger',m<50);
   d.classList.toggle('safe',m>=50);
-  if(m<50){
-    d.textContent='⚠ 最短POI '+m.toFixed(1)+'m / あと'+Math.max(0,50-m).toFixed(1)+'m';
-  }else{
-    d.textContent='✓ 最短POI '+m.toFixed(1)+'m';
-  }
+  d.textContent=(m<50?'⚠ ':'✓ ')+'最短POI '+m.toFixed(1)+'m';
 }
 function cmSafeRemoveNearestWarning(){
   if(cmSafeNearestWarning?.isConnected)cmSafeNearestWarning.remove();
