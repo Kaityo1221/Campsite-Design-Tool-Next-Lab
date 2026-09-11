@@ -17,11 +17,11 @@
   (async()=>{
     const boot=document.getElementById('boot');
     try{
-      const res=await fetch('./base-v7.html?v=20260911-bgfix2',{cache:'no-store'});
+      const res=await fetch('./base-v7.html?v=20260911-bgfix3',{cache:'no-store'});
       if(!res.ok)throw new Error('base-v7.html HTTP '+res.status);
       let html=await res.text();
       const oldBg='https://raw.githubusercontent.com/Kaityo1221/campsite-design-tool-adv-lab/main/creative/runtime/assets/creative-mode-opening.png';
-      const fixedBg='https://raw.githubusercontent.com/Kaityo1221/campsite-design-tool-adv-lab/1c27ca3ef14f423688f755d350ecc602bee1c573/creative/runtime/assets/creative-mode-opening.png';
+      const fixedBg='https://media.githubusercontent.com/media/Kaityo1221/campsite-design-tool-adv-lab/1c27ca3ef14f423688f755d350ecc602bee1c573/creative/runtime/assets/creative-mode-opening.png';
       html=html.split(oldBg).join(fixedBg);
       document.open();document.write(html);document.close();
     }catch(e){
