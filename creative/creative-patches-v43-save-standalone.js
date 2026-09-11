@@ -135,11 +135,8 @@ function cmInstallCatapultFx(){
     if(wrap.classList.contains('open')){
       wrap.classList.remove('cm-cat-snuff');
       cmCatapultLayout();
-      wrap.classList.remove('cm-cat-fired');
-      void wrap.offsetWidth;
-      wrap.classList.add('cm-cat-fired');
     }else{
-      wrap.classList.remove('cm-cat-fired','cm-cat-snuff');
+      wrap.classList.remove('cm-cat-snuff');
     }
   });
   observer.observe(wrap,{attributes:true,attributeFilter:['class']});
@@ -192,9 +189,7 @@ function cmInstallCatapultFx(){
       .cm-cat-soul{position:absolute;left:24px;top:24px;z-index:6;width:8px;height:8px;border-radius:50%;background:radial-gradient(circle,#fff 0 22%,#aef1ff 30%,rgba(90,210,255,.38) 60%,transparent 74%);box-shadow:0 0 8px #b8f5ff,0 0 18px rgba(65,207,255,.82);opacity:0;pointer-events:none}
       .cm-fab-wrap.cm-catapult.open .cm-cat-soul{animation:cmSoulRise 1.15s ease-out infinite}
       .cm-cat-soul-0{--sx:-18px;--sy:-58px;animation-delay:0s!important}.cm-cat-soul-1{--sx:14px;--sy:-82px;animation-delay:.18s!important}.cm-cat-soul-2{--sx:-32px;--sy:-105px;animation-delay:.34s!important}.cm-cat-soul-3{--sx:30px;--sy:-124px;animation-delay:.49s!important}.cm-cat-soul-4{--sx:-8px;--sy:-145px;animation-delay:.62s!important}.cm-cat-soul-5{--sx:42px;--sy:-92px;animation-delay:.78s!important}.cm-cat-soul-6{--sx:-46px;--sy:-76px;animation-delay:.93s!important}
-      .cm-cat-down .cm-cat-soul{--flip:1}
       @keyframes cmSoulRise{0%{opacity:0;transform:translate(0,0) scale(.3)}18%{opacity:.96}70%{opacity:.62}100%{opacity:0;transform:translate(var(--sx),var(--sy)) scale(1.05)}}
-      .cm-cat-down .cm-cat-soul{transform:scaleY(-1)}
       .cm-fab-wrap.cm-catapult.cm-cat-snuff .cm-cat-soul{display:none!important}
       @media (prefers-reduced-motion:reduce){.cm-fab-wrap.cm-catapult .cm-bubble,.cm-cat-path,.cm-cat-soul,.cm-add-fab:before,.cm-add-fab:after{animation:none!important;transition:none!important}}
     </style>`;
