@@ -11,7 +11,7 @@
 <div id="boot" class="boot"><div><strong>CREATIVE MODE</strong><small>読み込み中…</small><div class="boot-spinner"></div></div></div>
 <script>
 (async()=>{
-  const VERSION='20260911-main41';
+  const VERSION='20260911-main42';
   const boot=document.getElementById('boot');
   const fail=(stage,e)=>{
     boot.innerHTML='';
@@ -59,7 +59,8 @@
       './creative-patches-v32-poi-move-isolated.js?v=${VERSION}',
       './creative-patches-v33-action-wiring.js?v=${VERSION}',
       './creative-patches-v34-placement-core.js?v=${VERSION}',
-      './creative-patches-v35-nearest-poi-warning.js?v=${VERSION}'
+      './creative-patches-v35-nearest-poi-warning.js?v=${VERSION}',
+      './creative-patches-v36-compact-move-bar.js?v=${VERSION}'
     ];
     const patchTexts=await Promise.all(patchUrls.map(async url=>{
       const r=await fetch(url,{cache:'force-cache'});
