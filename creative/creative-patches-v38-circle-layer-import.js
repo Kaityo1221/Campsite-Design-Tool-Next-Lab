@@ -16,13 +16,11 @@
     if(m)found.add(Number(m[1]));
   }
   circleExtras=[];
-  if(found.has(40))circleExtras.push(40);
-  if(found.has(30))circleExtras.push(30);
+  [50,40,30].forEach(radius=>{if(found.has(radius))circleExtras.push(radius)});
   circlePanel.querySelectorAll('[data-extra]').forEach(b=>b.classList.toggle('active',circleExtras.includes(Number(b.dataset.extra))));
 }
-function cmCircleLayerEnabled(radius){return radius===50||circleExtras.includes(radius)}
+function cmCircleLayerEnabled(radius){return circleExtras.includes(radius)}
 function cmToggleCircleLayer(radius){
-  if(radius===50){msg('50m円は常時表示です',1000);return}
   const i=circleExtras.indexOf(radius);
   if(i>=0)circleExtras.splice(i,1);else circleExtras.push(radius);
   circleExtras.sort((a,b)=>b-a);
@@ -42,7 +40,13 @@ function cmIsCircleDummyRecord(r){
       "function parse(kml){records=[];polygons=[];circleExtras=[];const doc=new DOMParser().parseFromString(kml,'application/xml'),bounds=[];cmReadImportedCircleLayers(doc);"
     );
 
-    // v6 intentionally disabled record circles. Restore them here so imported circle layers actually draw.
+    // Keep the 50m visibility choice in CREATIVE MODE workspace restore as well.
+    src=src.replace(
+      "circleExtras=Array.isArray(w.circleExtras)?w.circleExtras.filter(x=>x===40||x===30):[];",
+      "circleExtras=Array.isArray(w.circleExtras)?w.circleExtras.filter(x=>x===50||x===40||x===30):[];"
+    );
+
+    // v6 intentionally disabled record circles. Restore only the circle layers currently enabled.
     src=src.replace(
       'renderRecordCircles=function(){recordCircleGroup.clearLayers()};',
       `renderRecordCircles=function(){
@@ -50,8 +54,7 @@ function cmIsCircleDummyRecord(r){
   if(!map.hasLayer(recordCircleGroup))recordCircleGroup.addTo(map);
   records.forEach(r=>{
     if(!r||r.deleted||cmIsCircleDummyRecord(r)||!map.hasLayer(groups[r.layer]))return;
-    L.circle(r.latlng,circleOpts(50)).addTo(recordCircleGroup);
-    circleExtras.forEach(radius=>L.circle(r.latlng,circleOpts(radius)).addTo(recordCircleGroup));
+    [50,40,30].forEach(radius=>{if(cmCircleLayerEnabled(radius))L.circle(r.latlng,circleOpts(radius)).addTo(recordCircleGroup)});
   });
 };`
     );
@@ -59,7 +62,7 @@ function cmIsCircleDummyRecord(r){
     // Fallback for builds where the v6 override is absent: make the base renderer equally safe.
     src=src.replace(
       "function renderRecordCircles(){recordCircleGroup.clearLayers();records.forEach(r=>{if(r.deleted||!map.hasLayer(groups[r.layer]))return;L.circle(r.latlng,circleOpts(50)).addTo(recordCircleGroup);circleExtras.forEach(radius=>L.circle(r.latlng,circleOpts(radius)).addTo(recordCircleGroup))})}",
-      "function renderRecordCircles(){recordCircleGroup.clearLayers();if(!map.hasLayer(recordCircleGroup))recordCircleGroup.addTo(map);records.forEach(r=>{if(!r||r.deleted||cmIsCircleDummyRecord(r)||!map.hasLayer(groups[r.layer]))return;L.circle(r.latlng,circleOpts(50)).addTo(recordCircleGroup);circleExtras.forEach(radius=>L.circle(r.latlng,circleOpts(radius)).addTo(recordCircleGroup))})}"
+      "function renderRecordCircles(){recordCircleGroup.clearLayers();if(!map.hasLayer(recordCircleGroup))recordCircleGroup.addTo(map);records.forEach(r=>{if(!r||r.deleted||cmIsCircleDummyRecord(r)||!map.hasLayer(groups[r.layer]))return;[50,40,30].forEach(radius=>{if(cmCircleLayerEnabled(radius))L.circle(r.latlng,circleOpts(radius)).addTo(recordCircleGroup)})})}"
     );
 
     // Extend the tap-style layer menu with circle layers while preserving the existing POI/polygon behavior.
