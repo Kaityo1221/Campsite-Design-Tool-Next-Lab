@@ -11,7 +11,7 @@
 <div id="boot" class="boot"><div><strong>CREATIVE MODE</strong><small>読み込み中…</small></div></div>
 <script>
 (async()=>{
-  const VERSION='20260911-main35';
+  const VERSION='20260911-main36';
   const boot=document.getElementById('boot');
   const fail=(stage,e)=>{
     boot.innerHTML='';
@@ -68,11 +68,11 @@
     const bgStable='https://media.githubusercontent.com/media/Kaityo1221/campsite-design-tool-adv-lab/1c27ca3ef14f423688f755d350ecc602bee1c573/creative/runtime/assets/creative-mode-opening.png';
     html=html.split(bgOldMain).join(bgStable).split(bgOldPinned).join(bgStable);
 
-    html=html.replace(/<input\b[^>]*\bid=["']entryFile["'][^>]*>/i,m=>m.replace(/\saccept\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/i,''));
+    html=html.replace(/<input\\b[^>]*\\bid=[\"']entryFile[\"'][^>]*>/i,m=>m.replace(/\\saccept\\s*=\\s*(?:\"[^\"]*\"|'[^']*'|[^\\s>]+)/i,''));
     html=html.replace('entryFile.onchange=()=>{',"entryFile.removeAttribute('accept');entryFile.accept='';entryFile.onchange=()=>{");
   }catch(e){
     document.body.style.cssText='margin:0;padding:24px;background:#17130f;color:#ffd0c8;font-family:-apple-system,BlinkMacSystemFont,sans-serif;white-space:pre-wrap';
-    document.body.textContent='CREATIVE MODE 読み込みエラー\n\n段階: final base patch\n'+(e&&e.stack?e.stack:(e&&e.message?e.message:String(e||'')));
+    document.body.textContent='CREATIVE MODE 読み込みエラー\\n\\n段階: final base patch\\n'+(e&&e.stack?e.stack:(e&&e.message?e.message:String(e||'')));
     return;
   }
   ${writeNeedle}`;
