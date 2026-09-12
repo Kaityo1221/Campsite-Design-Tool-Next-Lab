@@ -17,6 +17,8 @@
       .cm-fab-wrap.open .cm-add-fab:after{inset:-20px;border-color:rgba(115,214,255,.34);animation-delay:.28s}
       @keyframes cmCatAura{0%{opacity:.95;transform:scale(.72)}70%{opacity:.22}100%{opacity:0;transform:scale(1.28)}}
 
+      #entry:not(.hidden)~#cmStandaloneSaveButton,#entry:not(.hidden)~#cmStandaloneSaveMenu{display:none!important}
+
       .cm-fab-wrap .cm-bubble{z-index:10!important;width:52px!important;height:52px!important;left:2px!important;top:2px!important;border:1px solid rgba(255,255,255,.94)!important;background:rgba(255,255,255,.96)!important;box-shadow:0 0 0 3px rgba(120,225,255,.18),0 0 21px rgba(75,199,255,.46),0 8px 22px rgba(0,0,0,.22)!important;opacity:0!important;transform:translate(0,0) scale(.22)!important;pointer-events:none!important}
       .cm-fab-wrap .cm-bubble img{width:38px!important;height:38px!important;filter:drop-shadow(0 0 7px rgba(101,218,255,.72))!important}
 
