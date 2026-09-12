@@ -22,10 +22,10 @@
 
       .right-hand .cm-fab-wrap .cm-bubble[data-layer="new-pokestop"]{--cat-x:-104px;--cat-y:-58px;--cat-angle:29deg;--cat-len:112px;--cat-delay:0ms}
       .right-hand .cm-fab-wrap .cm-bubble[data-layer="new-gym"]{--cat-x:-72px;--cat-y:-112px;--cat-angle:57deg;--cat-len:126px;--cat-delay:48ms}
-      .right-hand .cm-fab-wrap .cm-bubble[data-layer="new-power"]{--cat-x:-18px;--cat-y:-152px;--cat-angle:83deg;--cat-len:145px;--cat-delay:96ms}
+      .right-hand .cm-fab-wrap .cm-bubble[data-layer="new-power"]{--cat-x:-44px;--cat-y:-44px;--cat-angle:45deg;--cat-len:54px;--cat-delay:96ms}
       .left-hand .cm-fab-wrap .cm-bubble[data-layer="new-pokestop"]{--cat-x:104px;--cat-y:-58px;--cat-angle:151deg;--cat-len:112px;--cat-delay:0ms}
       .left-hand .cm-fab-wrap .cm-bubble[data-layer="new-gym"]{--cat-x:72px;--cat-y:-112px;--cat-angle:123deg;--cat-len:126px;--cat-delay:48ms}
-      .left-hand .cm-fab-wrap .cm-bubble[data-layer="new-power"]{--cat-x:18px;--cat-y:-152px;--cat-angle:97deg;--cat-len:145px;--cat-delay:96ms}
+      .left-hand .cm-fab-wrap .cm-bubble[data-layer="new-power"]{--cat-x:44px;--cat-y:-44px;--cat-angle:135deg;--cat-len:54px;--cat-delay:96ms}
 
       .cm-fab-wrap.open .cm-bubble{opacity:1!important;transform:translate(var(--cat-x),var(--cat-y)) scale(1)!important;pointer-events:auto!important;animation:cmCatLaunch .36s cubic-bezier(.16,1.28,.35,1) both;animation-delay:var(--cat-delay)!important}
       .cm-fab-wrap:not(.open) .cm-bubble{opacity:0!important;transform:translate(0,0) scale(.22)!important;pointer-events:none!important;animation:none!important;transition:none!important}
