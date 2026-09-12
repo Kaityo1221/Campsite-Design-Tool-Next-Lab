@@ -5,10 +5,9 @@
   window.applyCreativePatches=function(src){
     src=previous(src);
 
-    // Keep the catapult prototype deliberately CSS-only.
-    // The existing add-menu click flow already closes immediately after a POI type is chosen.
-    src=src.replace("fab.textContent=cmAddMenuOpen?'×':'＋';","fab.textContent='＋';");
-
+    // Keep the catapult prototype CSS-only.
+    // The existing add-menu click flow already closes immediately after a POI type is chosen,
+    // and cmUpdateFab() keeps the FAB as ＋ when closed / × while the menu is open.
     const style=`<style id="cmV44CatapultStyle">
       .cm-fab-wrap{overflow:visible!important;isolation:isolate}
       .cm-fab-wrap .cm-add-fab{z-index:12!important;overflow:visible!important;transform-origin:center;transition:transform .16s ease,box-shadow .18s ease!important}
@@ -35,6 +34,35 @@
 
       .cm-fab-wrap .cm-bubble:before,.cm-fab-wrap.open .cm-bubble:before{display:none!important;content:none!important;opacity:0!important;animation:none!important}
       .cm-fab-wrap .cm-bubble:after,.cm-fab-wrap.open .cm-bubble:after{display:none!important;content:none!important;opacity:0!important;transform:none!important}
+
+      /* Handed placement for the v34 safe add bar. Keep DOM and placement logic untouched. */
+      .cm-safe-add-bar{
+        grid-template-areas:"value confirm cancel lever";
+        grid-template-columns:46px 64px 24px 76px!important;
+        justify-content:end!important;
+      }
+      .cm-safe-add-lever{grid-area:lever}
+      #cmSafeAddRadiusValue{grid-area:value}
+      .cm-safe-add-confirm{grid-area:confirm}
+      .cm-safe-add-cancel{grid-area:cancel}
+
+      .right-hand .cm-safe-add-bar{
+        left:auto!important;
+        right:8px!important;
+        transform:none!important;
+      }
+
+      .left-hand .cm-safe-add-bar{
+        left:8px!important;
+        right:auto!important;
+        transform:none!important;
+        grid-template-areas:"lever cancel confirm value";
+        grid-template-columns:76px 24px 64px 46px!important;
+        justify-content:start!important;
+      }
+      .left-hand .cm-safe-add-labels{left:52px!important;text-align:left!important}
+      .left-hand .cm-safe-add-track{left:31px!important}
+      .left-hand .cm-safe-add-knob{left:31px!important}
 
       @media (prefers-reduced-motion:reduce){.cm-fab-wrap .cm-bubble,.cm-add-fab:before,.cm-add-fab:after{animation:none!important;transition:none!important}}
     </style>`;
