@@ -50,6 +50,7 @@
         left:auto!important;
         right:8px!important;
         transform:none!important;
+        padding-right:11px!important;
       }
 
       .left-hand .cm-safe-add-bar{
