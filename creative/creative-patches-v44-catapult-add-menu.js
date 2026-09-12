@@ -19,31 +19,25 @@
 
       #entry:not(.hidden)~#cmStandaloneSaveButton,#entry:not(.hidden)~#cmStandaloneSaveMenu{display:none!important}
 
-      .cm-fab-wrap .cm-bubble{z-index:10!important;width:52px!important;height:52px!important;left:2px!important;top:2px!important;border:1px solid rgba(255,255,255,.94)!important;background:rgba(255,255,255,.96)!important;box-shadow:0 0 0 3px rgba(120,225,255,.18),0 0 21px rgba(75,199,255,.46),0 8px 22px rgba(0,0,0,.22)!important;opacity:0!important;transform:translate(0,0) scale(.22)!important;pointer-events:none!important}
-      .cm-fab-wrap .cm-bubble img{width:38px!important;height:38px!important;filter:drop-shadow(0 0 7px rgba(101,218,255,.72))!important}
+      .cm-fab-wrap .cm-bubble{z-index:10!important;width:54px!important;height:54px!important;left:1px!important;top:1px!important;border:1px solid rgba(255,236,190,.92)!important;border-radius:14px!important;background:linear-gradient(180deg,rgba(255,255,255,.98),rgba(243,236,217,.96))!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.95),inset 0 -2px 5px rgba(141,120,64,.12),0 0 0 3px rgba(120,225,255,.16),0 5px 14px rgba(0,0,0,.22)!important;opacity:0!important;transform:translate(0,0) scale(.22)!important;pointer-events:none!important}
+      .cm-fab-wrap .cm-bubble img{width:34px!important;height:34px!important;filter:drop-shadow(0 0 5px rgba(101,218,255,.45))!important}
 
-      .right-hand .cm-fab-wrap .cm-bubble[data-layer="new-pokestop"]{--cat-x:-88px;--cat-y:-28px;--cat-angle:18deg;--cat-len:92px;--cat-delay:0ms}
-      .right-hand .cm-fab-wrap .cm-bubble[data-layer="new-gym"]{--cat-x:-62px;--cat-y:-78px;--cat-angle:49deg;--cat-len:96px;--cat-delay:48ms}
-      .right-hand .cm-fab-wrap .cm-bubble[data-layer="new-power"]{--cat-x:-14px;--cat-y:-58px;--cat-angle:74deg;--cat-len:68px;--cat-delay:96ms}
-      .left-hand .cm-fab-wrap .cm-bubble[data-layer="new-pokestop"]{--cat-x:88px;--cat-y:-28px;--cat-angle:162deg;--cat-len:92px;--cat-delay:0ms}
-      .left-hand .cm-fab-wrap .cm-bubble[data-layer="new-gym"]{--cat-x:62px;--cat-y:-78px;--cat-angle:131deg;--cat-len:96px;--cat-delay:48ms}
-      .left-hand .cm-fab-wrap .cm-bubble[data-layer="new-power"]{--cat-x:14px;--cat-y:-58px;--cat-angle:106deg;--cat-len:68px;--cat-delay:96ms}
+      .right-hand .cm-fab-wrap .cm-bubble[data-layer="new-pokestop"]{--cat-x:-60px;--cat-y:0px;--cat-angle:0deg;--cat-len:60px;--cat-delay:0ms}
+      .right-hand .cm-fab-wrap .cm-bubble[data-layer="new-gym"]{--cat-x:-43px;--cat-y:-43px;--cat-angle:45deg;--cat-len:62px;--cat-delay:48ms}
+      .right-hand .cm-fab-wrap .cm-bubble[data-layer="new-power"]{--cat-x:0px;--cat-y:-60px;--cat-angle:90deg;--cat-len:60px;--cat-delay:96ms}
+      .left-hand .cm-fab-wrap .cm-bubble[data-layer="new-pokestop"]{--cat-x:60px;--cat-y:0px;--cat-angle:180deg;--cat-len:60px;--cat-delay:0ms}
+      .left-hand .cm-fab-wrap .cm-bubble[data-layer="new-gym"]{--cat-x:43px;--cat-y:-43px;--cat-angle:135deg;--cat-len:62px;--cat-delay:48ms}
+      .left-hand .cm-fab-wrap .cm-bubble[data-layer="new-power"]{--cat-x:0px;--cat-y:-60px;--cat-angle:90deg;--cat-len:60px;--cat-delay:96ms}
 
       .cm-fab-wrap.open .cm-bubble{opacity:1!important;transform:translate(var(--cat-x),var(--cat-y)) scale(1)!important;pointer-events:auto!important;animation:cmCatLaunch .36s cubic-bezier(.16,1.28,.35,1) both;animation-delay:var(--cat-delay)!important}
       .cm-fab-wrap:not(.open) .cm-bubble{opacity:0!important;transform:translate(0,0) scale(.22)!important;pointer-events:none!important;animation:none!important;transition:none!important}
       @keyframes cmCatLaunch{0%{opacity:0;transform:translate(0,0) scale(.2)}62%{opacity:1;transform:translate(calc(var(--cat-x)*1.04),calc(var(--cat-y)*1.04)) scale(1.08)}100%{opacity:1;transform:translate(var(--cat-x),var(--cat-y)) scale(1)}}
 
       .cm-fab-wrap .cm-bubble:before{content:'';position:absolute;left:50%;top:50%;width:var(--cat-len);height:3px;transform-origin:0 50%;transform:rotate(var(--cat-angle));background:repeating-linear-gradient(90deg,rgba(188,247,255,.96) 0 7px,rgba(188,247,255,.12) 7px 14px);border-radius:999px;box-shadow:0 0 7px rgba(72,213,255,.95),0 0 18px rgba(72,213,255,.45);opacity:0;pointer-events:none}
-      .cm-fab-wrap.open .cm-bubble:before{opacity:.92;animation:cmCatTrail .62s linear infinite}
+      .cm-fab-wrap.open .cm-bubble:before{opacity:.72;animation:cmCatTrail .62s linear infinite}
       @keyframes cmCatTrail{to{background-position:28px 0}}
 
-      .cm-fab-wrap .cm-bubble:after{position:absolute;top:50%;white-space:nowrap;border:1px solid rgba(128,204,224,.5);border-radius:999px;background:rgba(255,255,255,.9);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);box-shadow:0 4px 14px rgba(0,0,0,.13);padding:5px 9px;color:#116995;font-size:10px;font-weight:900;line-height:1;opacity:0;transform:translateY(-50%) scale(.9);transition:opacity .13s ease,transform .2s ease;pointer-events:none}
-      .cm-fab-wrap .cm-bubble[data-layer="new-pokestop"]:after{content:'新規ポケストップ'}
-      .cm-fab-wrap .cm-bubble[data-layer="new-gym"]:after{content:'新規ジム'}
-      .cm-fab-wrap .cm-bubble[data-layer="new-power"]:after{content:'新規パワースポット'}
-      .right-hand .cm-fab-wrap .cm-bubble:after{right:58px}
-      .left-hand .cm-fab-wrap .cm-bubble:after{left:58px}
-      .cm-fab-wrap.open .cm-bubble:after{opacity:1;transform:translateY(-50%) scale(1);transition-delay:calc(var(--cat-delay) + 90ms)}
+      .cm-fab-wrap .cm-bubble:after,.cm-fab-wrap.open .cm-bubble:after{display:none!important;content:none!important;opacity:0!important;transform:none!important}
 
       @media (prefers-reduced-motion:reduce){.cm-fab-wrap .cm-bubble,.cm-fab-wrap .cm-bubble:before,.cm-add-fab:before,.cm-add-fab:after{animation:none!important;transition:none!important}}
     </style>`;
