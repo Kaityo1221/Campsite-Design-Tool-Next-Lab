@@ -11,7 +11,7 @@
 <div id="boot" class="boot"><div><strong>CREATIVE MODE</strong><small>読み込み中…</small><div class="boot-spinner"></div></div></div>
 <script>
 (async()=>{
-  const VERSION='20260912-catapult12';
+  const VERSION='20260912-catapult13';
   const boot=document.getElementById('boot');
   const fail=(stage,e)=>{
     boot.innerHTML='';
@@ -68,7 +68,8 @@
       './creative-patches-v41-save-output-wiring.js?v=${VERSION}',
       './creative-patches-v42-save-button-hardbind.js?v=${VERSION}',
       './creative-patches-v43-save-standalone.js?v=${VERSION}',
-      './creative-patches-v44-catapult-add-menu.js?v=${VERSION}'
+      './creative-patches-v44-catapult-add-menu.js?v=${VERSION}',
+      './creative-patches-v45-count-shooting-star.js?v=${VERSION}'
     ];
     const patchTexts=await Promise.all(patchUrls.map(async url=>{
       const r=await fetch(url,{cache:'force-cache'});
