@@ -20,12 +20,12 @@
       .cm-fab-wrap .cm-bubble{z-index:10!important;width:52px!important;height:52px!important;left:2px!important;top:2px!important;border:1px solid rgba(255,255,255,.94)!important;background:rgba(255,255,255,.96)!important;box-shadow:0 0 0 3px rgba(120,225,255,.18),0 0 21px rgba(75,199,255,.46),0 8px 22px rgba(0,0,0,.22)!important;opacity:0!important;transform:translate(0,0) scale(.22)!important;pointer-events:none!important}
       .cm-fab-wrap .cm-bubble img{width:38px!important;height:38px!important;filter:drop-shadow(0 0 7px rgba(101,218,255,.72))!important}
 
-      .right-hand .cm-fab-wrap .cm-bubble[data-layer="new-pokestop"]{--cat-x:-104px;--cat-y:-58px;--cat-angle:29deg;--cat-len:112px;--cat-delay:0ms}
-      .right-hand .cm-fab-wrap .cm-bubble[data-layer="new-gym"]{--cat-x:-72px;--cat-y:-112px;--cat-angle:57deg;--cat-len:126px;--cat-delay:48ms}
-      .right-hand .cm-fab-wrap .cm-bubble[data-layer="new-power"]{--cat-x:-44px;--cat-y:-44px;--cat-angle:45deg;--cat-len:54px;--cat-delay:96ms}
-      .left-hand .cm-fab-wrap .cm-bubble[data-layer="new-pokestop"]{--cat-x:104px;--cat-y:-58px;--cat-angle:151deg;--cat-len:112px;--cat-delay:0ms}
-      .left-hand .cm-fab-wrap .cm-bubble[data-layer="new-gym"]{--cat-x:72px;--cat-y:-112px;--cat-angle:123deg;--cat-len:126px;--cat-delay:48ms}
-      .left-hand .cm-fab-wrap .cm-bubble[data-layer="new-power"]{--cat-x:44px;--cat-y:-44px;--cat-angle:135deg;--cat-len:54px;--cat-delay:96ms}
+      .right-hand .cm-fab-wrap .cm-bubble[data-layer="new-pokestop"]{--cat-x:-88px;--cat-y:-28px;--cat-angle:18deg;--cat-len:92px;--cat-delay:0ms}
+      .right-hand .cm-fab-wrap .cm-bubble[data-layer="new-gym"]{--cat-x:-62px;--cat-y:-78px;--cat-angle:49deg;--cat-len:96px;--cat-delay:48ms}
+      .right-hand .cm-fab-wrap .cm-bubble[data-layer="new-power"]{--cat-x:-14px;--cat-y:-58px;--cat-angle:74deg;--cat-len:68px;--cat-delay:96ms}
+      .left-hand .cm-fab-wrap .cm-bubble[data-layer="new-pokestop"]{--cat-x:88px;--cat-y:-28px;--cat-angle:162deg;--cat-len:92px;--cat-delay:0ms}
+      .left-hand .cm-fab-wrap .cm-bubble[data-layer="new-gym"]{--cat-x:62px;--cat-y:-78px;--cat-angle:131deg;--cat-len:96px;--cat-delay:48ms}
+      .left-hand .cm-fab-wrap .cm-bubble[data-layer="new-power"]{--cat-x:14px;--cat-y:-58px;--cat-angle:106deg;--cat-len:68px;--cat-delay:96ms}
 
       .cm-fab-wrap.open .cm-bubble{opacity:1!important;transform:translate(var(--cat-x),var(--cat-y)) scale(1)!important;pointer-events:auto!important;animation:cmCatLaunch .36s cubic-bezier(.16,1.28,.35,1) both;animation-delay:var(--cat-delay)!important}
       .cm-fab-wrap:not(.open) .cm-bubble{opacity:0!important;transform:translate(0,0) scale(.22)!important;pointer-events:none!important;animation:none!important;transition:none!important}
