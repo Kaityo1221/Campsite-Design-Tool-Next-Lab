@@ -5,9 +5,16 @@
   window.applyCreativePatches=function(src){
     src=previous(src);
 
-    // Keep the catapult prototype CSS-only.
-    // The existing add-menu click flow already closes immediately after a POI type is chosen,
-    // and cmUpdateFab() keeps the FAB as ＋ when closed / × while the menu is open.
+    // Finalize the catapult add-menu UI while keeping the existing 2x2 launch layout intact.
+    // Explicit confirm must always place visibly, even immediately after an iPhone pinch gesture.
+    const startNeedle="  activeLayer=layer;cmAddMode=true;activeTool='add';cmCloseAddMenu();cmUpdateFab();status.classList.add('fade');renderLayerPanel();";
+    const startReplacement="  activeLayer=layer;cmAddMode=true;activeTool='add';cmCloseAddMenu();cmUpdateFab();status.classList.add('fade');if(groups[layer]&&!map.hasLayer(groups[layer]))groups[layer].addTo(map);renderLayerPanel();";
+    if(src.includes(startNeedle))src=src.replace(startNeedle,startReplacement);
+
+    const confirmNeedle="d.querySelector('#cmSafeAddConfirm').onclick=e=>{e.preventDefault();e.stopPropagation();if(!cmAddMode)return;cmPlace(map.getCenter());cmSafeEnsureAddCircle()};";
+    const confirmReplacement="d.querySelector('#cmSafeAddConfirm').onclick=e=>{e.preventDefault();e.stopPropagation();if(!cmAddMode)return;if(groups[activeLayer]&&!map.hasLayer(groups[activeLayer]))groups[activeLayer].addTo(map);cmPinchUntil=0;const before=records.length;cmPlace(map.getCenter());if(records.length>before){renderLayerPanel();msg('追加しました。続けて配置できます',1200)}cmSafeEnsureAddCircle()};";
+    if(src.includes(confirmNeedle))src=src.replace(confirmNeedle,confirmReplacement);
+
     const style=`<style id="cmV44CatapultStyle">
       .cm-fab-wrap{overflow:visible!important;isolation:isolate}
       .cm-fab-wrap .cm-add-fab{z-index:12!important;overflow:visible!important;transform-origin:center;transition:transform .16s ease,box-shadow .18s ease!important}
