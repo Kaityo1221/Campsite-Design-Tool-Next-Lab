@@ -69,6 +69,7 @@ function cmInstallStandaloneSave(){
       #cmStandaloneSaveButton{position:fixed;left:10px;bottom:calc(72px + env(safe-area-inset-bottom));z-index:6000;width:52px;height:52px;padding:0;border:1px solid var(--edge);border-radius:14px;background:#fffdf7;color:#382d1d;font-size:23px;font-weight:900;box-shadow:0 4px 14px rgba(0,0,0,.18);pointer-events:auto!important;touch-action:manipulation!important;-webkit-user-select:none;user-select:none}
       .left-hand #cmStandaloneSaveButton{left:auto;right:10px}
       body.cm-placement-docked #cmStandaloneSaveButton{display:none!important}
+      body:has(.cm-sheet) #cmStandaloneSaveButton{display:none!important}
       #cmStandaloneSaveMenu{position:fixed;left:10px;bottom:calc(132px + env(safe-area-inset-bottom));z-index:6500;display:grid;grid-template-columns:1fr;gap:7px;width:min(260px,calc(100vw - 20px));padding:8px;border-radius:14px;background:rgba(48,40,29,.96);box-shadow:0 8px 24px rgba(0,0,0,.28);pointer-events:auto!important}
       .left-hand #cmStandaloneSaveMenu{left:auto;right:10px}
       #cmStandaloneSaveMenu button{min-height:46px;border:1px solid #b89a57;border-radius:11px;background:#fff8e6;color:#382d1d;padding:0 14px;font-weight:900;text-align:left;pointer-events:auto!important;touch-action:manipulation!important}
