@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111521">
+<title>CA Route Party Tally</title>
+<style>
+:root{color-scheme:dark;--bg:#10121a;--card:#1b1e2a;--line:#33394d;--text:#f7f8fb;--muted:#aeb5ca}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top,#24283a,#10121a 52%);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP",sans-serif}
+main{max-width:800px;margin:auto;padding:calc(14px + env(safe-area-inset-top)) 14px calc(34px + env(safe-area-inset-bottom))}
+h1{text-align:center;font-size:27px;margin:4px 0 14px}.progress{height:8px;background:#292d3d;border-radius:99px;overflow:hidden}.progress i{display:block;height:100%;background:linear-gradient(90deg,#7ee787,#5cc8ff)}.meta{display:flex;justify-content:space-between;color:var(--muted);font-weight:850;margin:7px 2px 13px}.card{background:#1b1e2a;border:1px solid var(--line);border-radius:24px;padding:18px}.q{font-size:19px;font-weight:950;line-height:1.5;margin-bottom:14px}.votes{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.vote{border:0;border-radius:18px;background:#292e3f;color:#fff;min-height:104px;padding:9px;font-weight:900;font-size:14px;line-height:1.3}.vote b{display:block;font-size:29px;margin-top:9px}.counts{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:9px}.count{text-align:center;font-size:28px;font-weight:950}.tools,.nav{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px}button,a.btn{border:0;border-radius:16px;min-height:48px;background:#2a2f40;color:#fff;font-size:14px;font-weight:900;padding:10px;text-decoration:none;display:flex;align-items:center;justify-content:center;text-align:center}.primary{background:#f4f7ff!important;color:#111522!important}button:disabled{opacity:.35}.summary{margin-top:17px;background:#171a24;border:1px solid var(--line);border-radius:20px;padding:14px}table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:9px 5px;border-bottom:1px solid #303548;text-align:center}th{color:#bfc7dc}.winner{font-weight:950}.foot{color:var(--muted);font-size:11px;text-align:center;margin-top:14px;line-height:1.5}.smalllink{text-align:center;margin:11px}.smalllink a{color:#91c8ff;text-decoration:none;font-weight:800}
+@media(max-width:430px){.vote{font-size:12px;min-height:108px;padding:7px 4px}.vote b{font-size:25px}.q{font-size:17px}}
+</style></head>
+<body><main>
+<h1>📊 会長用・秒速集計</h1><div class="progress"><i id="bar"></i></div><div class="meta"><span id="qnum"></span><span id="answered"></span></div>
+<section class="card"><div class="q" id="q"></div><div class="votes" id="votes"></div><div class="counts" id="counts"></div>
+<div class="tools"><button id="undo">↩️ 1票戻す</button><button id="clearq">🧹 この問題を0</button></div>
+</section>
+<div class="nav"><button id="prev">← 前へ</button><button class="primary" id="next">次へ →</button></div>
+<div class="smalllink"><a href="./index.html">🍻 質問ページへ</a></div>
+<section class="summary"><b>全8問まとめ</b><div id="table" style="margin-top:8px"></div><div class="tools"><button id="csv">⬇️ CSV保存</button><button id="reset">⚠️ 全リセット</button></div></section>
+<div class="foot">この端末のブラウザに自動保存されます。<br>6人分を聞きながら A / B / C をタップ。</div>
+</main>
+<script>
+const Q=[
+["Q1｜120mの寄り道、POIが何個増えたら行く？",["A｜3個くらい","B｜6個くらい","C｜10個以上"]],
+["Q2｜スタート直後。どっちを歩く？",["A｜10回曲がる・POI多め","B｜3回曲がる・POI少なめ","C｜状況で決める"]],
+["Q3｜90分歩いた後なら？",["A｜10回曲がる・POI多め","B｜3回曲がる・POI少なめ","C｜状況で決める"]],
+["Q4｜30人で歩くなら？",["A｜細い道","B｜広い道","C｜グループ分け"]],
+["Q5｜信号7回 vs 2回",["A｜最短・信号7回","B｜+200m・信号2回","C｜人数で変える"]],
+["Q6｜行き止まり。どこまで入る？",["A｜100mまで","B｜300mまで","C｜500mでも行く"]],
+["Q7｜40人。信号で隊列が切れた！",["A｜先頭を止めて待つ","B｜決めた場所で再集合","C｜最初から分ける"]],
+["Q8｜残り20分。何を優先？",["A｜POIを多く拾う","B｜駅・ゴールへ戻る","C｜楽なルート"]]
+];
+const KEY="campsite-ca-party-v1";let state;
+try{state=JSON.parse(localStorage.getItem(KEY))}catch(e){}
+if(!state||!Array.isArray(state.c)||state.c.length!==8)state={c:Array.from({length:8},()=>[0,0,0]),h:[],i:0};
+let i=state.i||0;const save=()=>{state.i=i;localStorage.setItem(KEY,JSON.stringify(state))};
+function render(){
+ q.textContent=Q[i][0];qnum.textContent='Q'+(i+1)+' / 8';let total=state.c[i].reduce((a,b)=>a+b,0);answered.textContent='回答 '+total+' / 6';bar.style.width=((i+1)/8*100)+'%';
+ votes.innerHTML=Q[i][1].map((x,n)=>'<button class="vote" data-n="'+n+'">'+x+'<b>＋1</b></button>').join('');
+ [...votes.children].forEach(b=>b.onclick=()=>{let n=+b.dataset.n;state.c[i][n]++;state.h.push([i,n]);save();render()});
+ counts.innerHTML=['A','B','C'].map((x,n)=>'<div class="count">'+x+' '+state.c[i][n]+'</div>').join('');
+ prev.disabled=i===0;next.disabled=i===7;undo.disabled=state.h.length===0;clearq.disabled=total===0;drawTable();save()
+}
+prev.onclick=()=>{if(i>0){i--;render();scrollTo(0,0)}};next.onclick=()=>{if(i<7){i++;render();scrollTo(0,0)}};
+undo.onclick=()=>{let x=state.h.pop();if(x&&state.c[x[0]][x[1]]>0)state.c[x[0]][x[1]]--;render()};
+clearq.onclick=()=>{state.c[i]=[0,0,0];state.h=state.h.filter(x=>x[0]!==i);render()};
+reset.onclick=()=>{if(confirm("8問すべての集計を0に戻しますか？")){state={c:Array.from({length:8},()=>[0,0,0]),h:[],i:0};i=0;save();render()}};
+function drawTable(){let s='<table><thead><tr><th>Q</th><th>A</th><th>B</th><th>C</th><th>計</th></tr></thead><tbody>';state.c.forEach((c,n)=>{s+='<tr><td>'+(n+1)+'</td><td>'+c[0]+'</td><td>'+c[1]+'</td><td>'+c[2]+'</td><td>'+c.reduce((a,b)=>a+b,0)+'</td></tr>'});table.innerHTML=s+'</tbody></table>'}
+csv.onclick=()=>{let rows=[['Q','A','B','C','Total'],...state.c.map((c,n)=>[n+1,...c,c.reduce((a,b)=>a+b,0)])];let blob=new Blob(['\uFEFF'+rows.map(r=>r.join(',')).join('\n')],{type:'text/csv;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ca-route-party-results.csv';a.click();URL.revokeObjectURL(a.href)};
+render();
+</script></body></html>
