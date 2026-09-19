@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#151722">
+<title>CA Route Party | Campsite AI</title>
+<style>
+:root{color-scheme:dark;--bg:#10121a;--card:#1b1e2a;--line:#303548;--text:#f7f8fb;--muted:#aeb5ca;--accent:#7ee787}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top,#24283a 0,#10121a 48%);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP",sans-serif}
+main{max-width:760px;margin:auto;padding:calc(18px + env(safe-area-inset-top)) 18px calc(34px + env(safe-area-inset-bottom))}
+.kicker{text-align:center;color:var(--muted);font-size:12px;font-weight:900;letter-spacing:.14em}.title{text-align:center;font-size:30px;font-weight:950;margin:6px 0 16px}
+.progress{height:8px;background:#292d3d;border-radius:999px;overflow:hidden}.progress>i{display:block;height:100%;background:linear-gradient(90deg,#7ee787,#5cc8ff);width:12.5%;transition:.2s}.meta{text-align:right;color:var(--muted);font-weight:800;margin:6px 2px 14px}
+.card{background:rgba(27,30,42,.96);border:1px solid var(--line);border-radius:26px;padding:22px 18px;box-shadow:0 18px 50px rgba(0,0,0,.28)}
+.qtitle{font-size:22px;font-weight:950;line-height:1.45}.qbody{font-size:19px;font-weight:780;line-height:1.75;margin:14px 0 18px}
+.option{padding:15px 14px;margin:10px 0;border-radius:17px;background:#252938;border:1px solid #363b4e;font-size:17px;font-weight:850;line-height:1.45}
+details{margin-top:16px;border:1px solid #3a4055;border-radius:18px;background:#171a24}summary{cursor:pointer;padding:16px;font-weight:900;color:#d9e7ff}.english{padding:0 16px 18px;font-size:19px;line-height:1.7;font-weight:720}.enopt{margin:10px 0;padding:11px 12px;border-radius:13px;background:#222634}
+.nav{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}button,.linkbtn{appearance:none;border:0;border-radius:17px;min-height:52px;padding:12px 14px;font-size:16px;font-weight:900;background:#2a2f40;color:#fff;text-align:center;text-decoration:none;display:flex;align-items:center;justify-content:center}button.primary{background:#f4f7ff;color:#111522}button:disabled{opacity:.35}.footer{margin-top:16px;color:var(--muted);font-size:12px;text-align:center;line-height:1.6}.admin{margin-top:12px;display:flex;justify-content:center}.admin a{color:#91c8ff;text-decoration:none;font-weight:800;font-size:13px}
+</style>
+</head>
+<body><main>
+<div class="kicker">CAMPSITE AI × CA ROUTE PARTY</div>
+<div class="title">🍻 みんななら、どっち？</div>
+<div class="progress"><i id="bar"></i></div><div class="meta" id="meta">1 / 8</div>
+<section class="card">
+<div class="qtitle" id="qtitle"></div><div class="qbody" id="qbody"></div><div id="opts"></div>
+<details><summary>🌍 English / Tap to open</summary><div class="english"><div id="entitle"></div><div id="enbody" style="margin-top:12px"></div><div id="enopts"></div></div></details>
+</section>
+<div class="nav"><button id="prev">← 前の問題</button><button class="primary" id="next">次の問題 →</button></div>
+<div class="admin"><a href="./tally.html">📊 会長用・集計ページ</a></div>
+<div class="footer">正解を当てるゲームではありません。<br>CAそれぞれの「現場ならどうする？」を集めます。</div>
+</main>
+<script>
+const Q=[
+{jt:"Q1｜120mの寄り道、POIが何個増えたら行く？",jb:"目的地までは直進800m。POI密集地を通ると920m。何個くらいPOIが増えるなら寄りますか？",o:["A｜3個くらい","B｜6個くらい","C｜10個以上"],et:"Q1 | A 120m detour: how many extra POIs make it worth it?",eb:"The destination is 800m straight ahead. Going through a POI cluster makes it 920m. How many extra POIs would make you take the detour?",eo:["A | About 3","B | About 6","C | 10 or more"]},
+{jt:"Q2｜スタート直後。どっちを歩く？",jb:"POIは多いけど10回曲がる道と、POIは少ないけど3回しか曲がらない道。",o:["A｜10回曲がる・POI多め","B｜3回曲がる・POI少なめ","C｜その時の状況で決める"],et:"Q2 | Right after the start. Which route?",eb:"One route has more POIs but 10 turns. The other has fewer POIs but only 3 turns.",eo:["A | 10 turns, more POIs","B | 3 turns, fewer POIs","C | Depends on the situation"]},
+{jt:"Q3｜90分歩いた後なら？",jb:"条件はQ2と同じ。90分歩いた後でも、同じルートを選びますか？",o:["A｜10回曲がる・POI多め","B｜3回曲がる・POI少なめ","C｜その時の状況で決める"],et:"Q3 | What about after 90 minutes of walking?",eb:"Same choice as Q2, but you have already been walking for 90 minutes. Which route now?",eo:["A | 10 turns, more POIs","B | 3 turns, fewer POIs","C | Depends on the situation"]},
+{jt:"Q4｜30人で歩くなら？",jb:"細い道はPOIが多い。広い道はPOIが少ない。30人のミートアップならどうしますか？",o:["A｜細い道を通る","B｜広い道を通る","C｜グループを分ける"],et:"Q4 | What would you do with 30 people?",eb:"The narrow street has more POIs. The wide street has fewer POIs. What would you do with a 30-person meetup?",eo:["A | Take the narrow street","B | Take the wide street","C | Split into groups"]},
+{jt:"Q5｜信号7回 vs 2回",jb:"最短ルートは信号7回。200m遠回りすると信号2回。どちらを選びますか？",o:["A｜最短・信号7回","B｜+200m・信号2回","C｜人数で変える"],et:"Q5 | 7 traffic lights vs 2",eb:"The shortest route has 7 traffic lights. A 200m detour has only 2. Which do you choose?",eo:["A | Shortest, 7 lights","B | +200m, only 2 lights","C | Depends on group size"]},
+{jt:"Q6｜行き止まりのPOI密集地。どこまで入る？",jb:"POI密集地は魅力的。でも同じ道を戻る必要があります。何mまでなら寄りますか？",o:["A｜100mまで","B｜300mまで","C｜500mでも行く"],et:"Q6 | A POI cluster in a dead end. How far would you go?",eb:"The POI cluster is attractive, but you must walk back the same way. How much backtracking would you accept?",eo:["A | Up to 100m","B | Up to 300m","C | Even 500m"]},
+{jt:"Q7｜40人。信号で隊列が切れた！",jb:"大人数の列が信号で分断されました。あなたならどう運営しますか？",o:["A｜先頭を止めて最後尾を待つ","B｜決めた場所で再集合","C｜最初から複数グループにする"],et:"Q7 | 40 people. The group gets split at a traffic light!",eb:"A large group gets separated by a traffic light. How would you manage it?",eo:["A | Stop the front and wait","B | Regroup at a planned point","C | Split into groups from the start"]},
+{jt:"Q8｜残り20分。何を優先する？",jb:"イベント終了まであと20分。最後のルートで一番優先するものは？",o:["A｜最後までPOIを多く拾う","B｜駅・ゴールへ確実に戻る","C｜曲がり少なめで楽に歩く"],et:"Q8 | 20 minutes left. What matters most?",eb:"Only 20 minutes remain. What is your top priority for the final part of the route?",eo:["A | Collect as many POIs as possible","B | Return safely to the station/finish","C | Take an easier route with fewer turns"]}
+];
+let i=Math.max(0,Math.min(7,parseInt(location.hash.replace("#q",""))-1||0));
+function render(){let q=Q[i];qtitle.textContent=q.jt;qbody.textContent=q.jb;opts.innerHTML=q.o.map(x=>'<div class="option">'+x+'</div>').join('');entitle.innerHTML='<b>'+q.et+'</b>';enbody.textContent=q.eb;enopts.innerHTML=q.eo.map(x=>'<div class="enopt">'+x+'</div>').join('');meta.textContent=(i+1)+' / '+Q.length;bar.style.width=((i+1)/Q.length*100)+'%';prev.disabled=i===0;next.disabled=i===Q.length-1;location.hash='q'+(i+1);document.querySelector('details').open=false}
+prev.onclick=()=>{if(i>0){i--;render();scrollTo(0,0)}};next.onclick=()=>{if(i<Q.length-1){i++;render();scrollTo(0,0)}};render();
+</script></body></html>
